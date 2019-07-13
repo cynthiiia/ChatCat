@@ -1,0 +1,126 @@
+html,
+body {
+    height: 100%;
+}
+
+.container-fluid {
+    height: 100%;
+}
+
+/*Navbar */
+/* The popup form - hidden by default */
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 9;
+}
+
+.form-popup {
+    display: none;
+    position: fixed;
+    top: 52px;
+    right: 0px;
+    /* the sign up and log in buttons and the popup for responsive css */
+    border: 3px solid #f1f1f1;
+    z-index: 9;
+}
+
+/* Add styles to the form container */
+.form-container {
+    max-width: 300px;
+    padding: 10px;
+    background-color: white;
+}
+
+/* Full-width input fields */
+.form-container input[type=text],
+.form-container input[type=password] {
+    width: 100%;
+    padding: 15px;
+    margin: 5px 0 22px 0;
+    border: none;
+    background: #f1f1f1;
+}
+
+/* When the inputs get focus, do something */
+.form-container input[type=text]:focus,
+.form-container input[type=password]:focus {
+    background-color: #ddd;
+    outline: none;
+}
+
+/* Set a style for the submit/login button */
+.form-container a {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 10px;
+    opacity: 0.8;
+}
+
+/* Add a red background color to the cancel button */
+.form-container .cancel {
+    background-color: red;
+}
+
+
+
+/* Header/Title Area */
+#header-area {
+    padding-top: 52px;
+}
+
+#header-area .col-lg-12 {
+    padding-top: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+#header-area img {
+    height: 60px;
+    width: auto;
+}
+
+/* Messages section */
+#message-area {
+    height: 60%;
+    padding: 50px;
+    outline: 2px solid rgb(175, 199, 209);
+    outline-offset: -50px;
+}
+
+#message-area .col-lg-12 {
+    height: 100%;
+    overflow-y: scroll;
+}
+.chatBox {
+    border: 2px solid #dedede;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px 0;
+    width:100%;
+
+}
+
+/* Darker chat container */
+.darker {
+  border-color: #ccc;
+  background-color: #ddd;
+}
+
+.chatBox::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+/*Submit messages area */
+#input-area .col-lg-10 {
+
+    padding: 0 0 0 50px;
+}

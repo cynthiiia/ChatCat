@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- meta -->
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>ChatCat</title>
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css?family=Poppins:300,300i,400,400i,500,500i,600,600i,700,700i|Playfair+Display:400,400i,700,700i,900,900i"
+        rel="stylesheet">
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+    <!--CSS-->
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Insert these scripts at the bottom of the HTML, but before you use any Firebase services -->
+
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/6.2.4/firebase-app.js"></script>
+
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/6.2.4/firebase-firestore.js"></script>
+
+</head>
+
+<body>
+    <!--Navigation Bar-->
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a id="signupOpen"><span class="glyphicon glyphicon-user"></span> Sign Up</a>
+                    <div class="form-popup" id="signupForm">
+                        <form class="form-container">
+                            <h1>Sigup</h1>
+                            <label for="firstName"><b>First Name</b></label>
+                            <input type="text" placeholder="Enter First Name" name="firstName" required>
+                            <label for="lastName"><b>Last Name</b></label>
+                            <input type="text" placeholder="Enter Last Name" name="lastName" required>
+                            <label for="email"><b>Email</b></label>
+                            <input type="text" placeholder="Enter Email" name="email" required>
+                            <label for="password"><b>Password</b></label>
+                            <input type="password" placeholder="Enter Password" name="password" required>
+                            <a class="submit" id="signupSubmit">Submit</a>
+                            <a class="cancel" id="signupCancel">Close</a>
+
+                        </form>
+                    </div>
+                </li>
+                <li>
+                    <a id="loginOpen"><span class="glyphicon glyphicon-log-in"></span> Login</a>
+                    <div class="form-popup" id="loginForm">
+                        <form class="form-container">
+                            <h1>Login</h1>
+                            <label for="email"><b>Email</b></label>
+                            <input type="text" placeholder="Enter Email" name="email" required>
+                            <label for="password"><b>Password</b></label>
+                            <input type="password" placeholder="Enter Password" name="password" required>
+                            <a class="submit" id="loginSubmit">Submit</a>
+                            <a class="cancel" id="loginCancel">Close</a>
+
+                        </form>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+
+    <div class="container-fluid">
+        <div class="row" id="header-area">
+            <div class="col-lg-12 text-center">
+                <h1>Welcome to ChatCat!</h1>
+                <img src="images/cat.jpg">
+            </div>
+        </div>
+        <div class="row" id="message-area">
+            <div class="col-lg-12">
+            </div>
+
+        </div>
+        <div class="row" id="input-area">
+            <div class="col-lg-10">
+                <textarea class="form-control" rows="5" id="input" onkeydown="enterSubmit()"></textarea>
+            </div>
+            <div class="col-lg-2">
+                <button type="submit" class="btn" id="submit">Submit</button>
+                <!-- <button type="button" class="btn" id="reverse">Reverse</button> -->
+            </div>
+        </div>
+    </div>
+
+    <!--JS File-->
+    <script src="main.js"></script>
+</body>
+
+</html>
