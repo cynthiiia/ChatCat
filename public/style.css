@@ -107,20 +107,23 @@ body {
 
 }
 
-/* Darker chat container */
-.darker {
-  border-color: #ccc;
-  background-color: #ddd;
-}
-
 .chatBox::after {
   content: "";
   clear: both;
   display: table;
 }
 
+/* Darker chat container */
+.darker {
+  border-color: #ccc;
+  background-color: #ddd;
+}
+
 /*Submit messages area */
 #input-area .col-lg-10 {
 
     padding: 0 0 0 50px;
+}
+#input-area .col-lg-10 textarea {
+    width:100%;
 }

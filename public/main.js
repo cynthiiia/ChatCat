@@ -69,6 +69,8 @@ document.getElementById("signupSubmit").onclick = function () {
     })
     return firstName;
 } */
+
+
 //Helper function to write messages with styling to the message-area
 function printMessage(firstName, message, darker) {
     document.getElementById("message-area").children[0].innerHTML += "<div class='container chatBox " + darker + "'>" + "<p><b>" + firstName + ": </b></p>" + "<p>" + message + "</p></div>"
@@ -93,6 +95,31 @@ document.getElementById("loginSubmit").onclick = function () {
                 document.getElementById("loginForm").style.display = "none";
                 alert('Sign in Successful, ' + doc.data().firstName + " " + doc.data().lastName);
                 user = doc;
+
+                // Printing last 5 messsages sent to the chat when the user enters the chat after logging in
+                messagesRefInOrder = db.collection("rooms").doc("general").collection("messages").orderBy("timestamp", "desc").limit(5);
+                messagesRefInOrder.get().then(function (collection) {
+                    var messagesInfo = [];
+                    collection.forEach(function (message) {
+                        messagesInfo.push([message.data().fromName, message.data().msg]);
+                    })
+                    for (let i = messagesInfo.length - 1; i >= 0; i--) {
+                        printMessage(messagesInfo[i][0], messagesInfo[i][1], i % 2 == 0 ? "darker" : "");
+                    }
+                });
+                // Updating the user's screen for any messages that are newly sent by other users 
+                messagesRefInOrder.onSnapshot(function (snapshot) {
+                    snapshotCounter += 1;
+                    if (snapshotCounter > 1) {
+                        snapshot.docChanges().forEach(function (change) {
+                            if (change.type === "added" && change.doc.data().fromEmail != user.data().email) {
+                                var messageAreaBody = document.getElementById("message-area").children[0];
+                                printMessage(change.doc.data().fromName, change.doc.data().msg, messageAreaBody.children[messageAreaBody.childElementCount - 1 ].classList.contains("darker") ? "" : " darker");
+                           
+                            }
+                        })
+                    }
+                })
             } else {
                 alert("Incorrect password");
             }
@@ -102,31 +129,6 @@ document.getElementById("loginSubmit").onclick = function () {
     }).catch(function (error) {
 
     });
-    // Printing last 5 messsages sent to the chat when the user enters the chat after logging in
-    messagesRefInOrder = db.collection("rooms").doc("general").collection("messages").orderBy("timestamp", "desc").limit(5);
-    messagesRefInOrder.get().then(function (collection) {
-        var messagesInfo = [];
-        collection.forEach(function (doc) {
-            messagesInfo.push([doc.data().fromName, doc.data().msg]);
-        })
-        for (let i = messagesInfo.length - 1; i >= 0; i--) {
-            printMessage(messagesInfo[i][0], messagesInfo[i][1], i % 2 == 0 ? "darker" : "");
-        }
-    });
-    // Updating the user's screen for any messages that are newly sent by other users 
-    messagesRefInOrder.onSnapshot(function (snapshot) {
-        snapshotCounter += 1;
-        if (snapshotCounter > 1) {
-            snapshot.docChanges().forEach(function (change) {
-                if (change.type === "added" && change.doc.data().fromEmail != user.data().email) {
-                    printMessage(doc.data().fromName, change.doc.data().msg, "darker");
-                    /* var messageAreaBody = document.getElementById("message-area").children[0];
-                    printMessage(doc.data().fromName, change.doc.data().msg, messageAreaBody.children[messageAreaBody.childElementCount - 1 ].classList.contains("darker") ? "" : " darker");
-                 */
-                }
-            })
-        }
-    })
 };
 
 // Write messages to database
