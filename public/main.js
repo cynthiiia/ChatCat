@@ -9,8 +9,11 @@ var firebaseConfig = {
 };
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-
+//Firestore
 var db = firebase.firestore();
+//Firebase Authenticator
+var auth = firebase.auth();
+
 // Create a new collection and add data
 
 //Navbar signup and login action
@@ -42,22 +45,78 @@ document.getElementById("loginCancel").onclick = function () {
 }
 
 
-// Signup write to database
-document.getElementById("signupSubmit").onclick = function () {
+// Email checker for signups
+function validateEmail(email) {
+    var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; // check this
     var signupFormBody = document.querySelector("#signupForm .form-container");
+    signupFormBody.children[7].innerHTML = "";
 
-    db.collection("users").doc(signupFormBody.querySelector('input[name="email"]').value).set({
-            firstName: signupFormBody.querySelector('input[name="firstName"]').value,
-            lastName: signupFormBody.querySelector('input[name="lastName"]').value,
-            email: signupFormBody.querySelector('input[name="email"]').value,
-            password: signupFormBody.querySelector('input[name="password"]').value
-        })
-        .then(function () {
-            console.log("Document written sucessfully!");
-        })
-        .catch(function (error) {
-            console.error("Error adding document: ", error);
+    if ((re.test(String(email).toLowerCase())) == false) {
+        signupFormBody.children[7].innerHTML += "Please enter a valid email";
+        return false;
+    } else {
+        return true;
+    }
+}
+//Password checker for signups
+function valiatePassword(password) {
+    var re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    var signupFormBody = document.querySelector("#signupForm .form-container");
+    signupFormBody.children[10].innerHTML = "";
+
+    if (re.test(String(password)) == false) {
+        signupFormBody.children[10].innerHTML += "Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character";
+        return false;
+    } else {
+        return true;
+    }
+}
+
+// Signup write to database
+document.getElementById("signupSubmit").onclick = async function () {
+    var signupFormBody = document.querySelector("#signupForm .form-container");
+    var firstName = signupFormBody.querySelector('input[name="firstName"]').value;
+    var lastName = signupFormBody.querySelector('input[name="lastName"]').value;
+    var email = signupFormBody.querySelector('input[name="email"]').value;
+    var password = signupFormBody.querySelector('input[name="password"]').value;
+
+    if (validateEmail(email) & valiatePassword(password)) {
+        var validSignupInfo = true;
+
+        await auth.createUserWithEmailAndPassword(email, password).then(function(user) {
+            return user.updateProfile({
+                displayName: firstName + " " + lastName,
+                email: email
+            })
+        }).catch(function (error) { // Handle Errors here. --> figure out proper errors to catch here
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            if (errorCode == 'auth/weak-password') {
+                alert('The password is too weak.');
+            } else {
+                alert(errorMessage);
+            }
+            console.log(error);
+            validSignupInfo = false;
         });
+
+        if (validSignupInfo == true) {
+            db.collection("users").doc(email).set({
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email
+                })
+                .then(function () {
+                    console.log("Document written sucessfully!");
+                })
+                .catch(function (error) {
+                    console.error("Error adding document: ", error);
+                });
+
+            document.querySelector(".nav").innerHTML = '<li> <a id="signupOpen"> Sign Out</a></li>';
+        }
+
+    }
 }
 
 
@@ -86,12 +145,30 @@ document.getElementById("loginSubmit").onclick = function () {
     var loginFormBody = document.querySelector("#loginForm .form-container");
     var email = loginFormBody.querySelector("input[name='email']").value;
     var password = loginFormBody.querySelector('input[name="password"]').value;
+    var validLoginInfo = true;
     /* use async functions whenever we need to interact with a server */
     /* no need for async unless you're using await*/
+    firebase.auth().signInWithEmailAndPassword(email, password).catch(function (error) {
+        // Handle Errors here.
+        var errorCode = error.code;
+        var errorMessage = error.message;
 
-    db.collection("users").doc(email).get().then(function (doc) {
-        if (doc.exists) {
-            if (doc.data().password == password) {
+        if (errorCode === 'auth/wrong-password') {
+            document.querySelector("#loginForm .form-container").children[7].innerHTML = "Username and/or password invalid.";
+
+        } else if (errorCode === 'user-not-found') {
+            document.querySelector("#loginForm .form-container").children[7].innerHTML = "Username and/or password invalid.";
+
+        } else {
+            document.querySelector("#loginForm .form-container").children[7].innerHTML = errorMessage;
+        }
+        validLoginInfo = false;
+        // ...
+    });
+    if (validLoginInfo == true) {
+        db.collection("users").doc(email).get().then(function (doc) {
+            if (doc.exists) {
+                
                 document.getElementById("loginForm").style.display = "none";
                 alert('Sign in Successful, ' + doc.data().firstName + " " + doc.data().lastName);
                 user = doc;
@@ -114,21 +191,15 @@ document.getElementById("loginSubmit").onclick = function () {
                         snapshot.docChanges().forEach(function (change) {
                             if (change.type === "added" && change.doc.data().fromEmail != user.data().email) {
                                 var messageAreaBody = document.getElementById("message-area").children[0];
-                                printMessage(change.doc.data().fromName, change.doc.data().msg, messageAreaBody.children[messageAreaBody.childElementCount - 1 ].classList.contains("darker") ? "" : " darker");
-                           
+                                printMessage(change.doc.data().fromName, change.doc.data().msg, messageAreaBody.children[messageAreaBody.childElementCount - 1].classList.contains("darker") ? "" : " darker");
+
                             }
                         })
                     }
                 })
-            } else {
-                alert("Incorrect password");
             }
-        } else {
-            alert("User does not exist");
-        }
-    }).catch(function (error) {
-
-    });
+        })
+    }
 };
 
 // Write messages to database
@@ -166,7 +237,15 @@ function enterSubmit() {
     }
 }
 
-
+function initApp() {
+    firebase.auth().onAuthStateChanged(function(currentUser) {
+        if(currentUser) {
+            user = currentUser;
+        } else {
+            user = null;
+        }
+    })
+}
 
 //Reverse function 
 /* document.getElementById("reverse").onclick = function () {
