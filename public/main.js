@@ -14,9 +14,14 @@ var db = firebase.firestore();
 //Firebase Authenticator
 var auth = firebase.auth();
 
+//Users data
+//var user; // To save the user that opened the site
+var name, email;
+var snapshotCounter = 0; //Counter to differentiate between first and other snapshots
+
 // Create a new collection and add data
 
-//Navbar signup and login action
+//Navbar signup/signout and login action
 document.getElementById("signupOpen").onclick = function () {
     if (document.getElementById("signupForm").style.display == "block") {
         document.getElementById("signupForm").style.display = "none";
@@ -42,6 +47,14 @@ document.getElementById("loginOpen").onclick = function () {
 
 document.getElementById("loginCancel").onclick = function () {
     document.getElementById("loginForm").style.display = "none";
+}
+document.getElementById("userOpen").onclick = function () {
+    if (document.getElementById("userForm").style.display == "block") {
+        document.getElementById("userForm").style.display = "none";
+
+    } else {
+        document.getElementById("userForm").style.display = "block";
+    }
 }
 
 
@@ -73,34 +86,23 @@ function valiatePassword(password) {
 }
 
 // Signup write to database
-document.getElementById("signupSubmit").onclick = async function () {
+document.getElementById("signupSubmit").onclick = function () {
     var signupFormBody = document.querySelector("#signupForm .form-container");
     var firstName = signupFormBody.querySelector('input[name="firstName"]').value;
     var lastName = signupFormBody.querySelector('input[name="lastName"]').value;
     var email = signupFormBody.querySelector('input[name="email"]').value;
     var password = signupFormBody.querySelector('input[name="password"]').value;
+    //var user = null;
 
     if (validateEmail(email) & valiatePassword(password)) {
-        var validSignupInfo = true;
 
-        await auth.createUserWithEmailAndPassword(email, password).then(function(user) {
-            return user.updateProfile({
-                displayName: firstName + " " + lastName,
-                email: email
-            })
-        }).catch(function (error) { // Handle Errors here. --> figure out proper errors to catch here
-            var errorCode = error.code;
-            var errorMessage = error.message;
-            if (errorCode == 'auth/weak-password') {
-                alert('The password is too weak.');
-            } else {
-                alert(errorMessage);
-            }
-            console.log(error);
-            validSignupInfo = false;
-        });
+        auth.createUserWithEmailAndPassword(email, password).then(function () {
+            document.getElementById("signupForm").style.display = "none";
+            var user = firebase.auth().currentUser;
+            user.sendEmailVerification();
+            return user;
+        }).then(function (user) {
 
-        if (validSignupInfo == true) {
             db.collection("users").doc(email).set({
                     firstName: firstName,
                     lastName: lastName,
@@ -113,42 +115,49 @@ document.getElementById("signupSubmit").onclick = async function () {
                     console.error("Error adding document: ", error);
                 });
 
-            document.querySelector(".nav").innerHTML = '<li> <a id="signupOpen"> Sign Out</a></li>';
-        }
+            user.updateProfile({
+                displayName: firstName + " " + lastName,
+                email: email,
+                emailVerified: false
+
+            })
+        }).catch(function (error) { // Handle Errors here. --> figure out proper errors to catch here
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            if (errorCode == 'auth/weak-password') {
+                alert('The password is too weak.');
+            } else {
+                alert(errorMessage);
+            }
+            console.log(error);
+        });
 
     }
 }
 
 
-//Helper function to determine the user's name from their email
-/* async function findName(email) {
-    var firstName = "";
-    await db.collection("users").doc(email).get().then(function (doc) {
-        firstName = doc.data().firstName;
-    })
-    return firstName;
-} */
 
 
 //Helper function to write messages with styling to the message-area
 function printMessage(firstName, message, darker) {
-    document.getElementById("message-area").children[0].innerHTML += "<div class='container chatBox " + darker + "'>" + "<p><b>" + firstName + ": </b></p>" + "<p>" + message + "</p></div>"
-
+    var messageAreaBody = document.getElementById("message-area").children[0];
+    messageAreaBody.innerHTML += "<div class='container chatBox " + darker + "'>" + "<p><b>" + firstName + ": </b></p>" + "<p>" + message + "</p></div>"
+    messageAreaBody.children[messageAreaBody.childElementCount - 1].scrollIntoView();
 
 }
 
-var user; // To save the user that opened the site
-var snapshotCounter = 0; //Counter to differentiate between first and other snapshots
+
 
 // login write to database 
 document.getElementById("loginSubmit").onclick = function () {
     var loginFormBody = document.querySelector("#loginForm .form-container");
-    var email = loginFormBody.querySelector("input[name='email']").value;
-    var password = loginFormBody.querySelector('input[name="password"]').value;
-    var validLoginInfo = true;
+    var loginEmail = loginFormBody.querySelector("input[name='email']").value;
+    var loginPassword = loginFormBody.querySelector('input[name="password"]').value;
     /* use async functions whenever we need to interact with a server */
     /* no need for async unless you're using await*/
-    firebase.auth().signInWithEmailAndPassword(email, password).catch(function (error) {
+    firebase.auth().signInWithEmailAndPassword(loginEmail, loginPassword).then(function () {
+        document.getElementById("loginForm").style.display = "none";
+    }).catch(function (error) {
         // Handle Errors here.
         var errorCode = error.code;
         var errorMessage = error.message;
@@ -162,44 +171,40 @@ document.getElementById("loginSubmit").onclick = function () {
         } else {
             document.querySelector("#loginForm .form-container").children[7].innerHTML = errorMessage;
         }
-        validLoginInfo = false;
-        // ...
     });
-    if (validLoginInfo == true) {
-        db.collection("users").doc(email).get().then(function (doc) {
-            if (doc.exists) {
-                
-                document.getElementById("loginForm").style.display = "none";
-                alert('Sign in Successful, ' + doc.data().firstName + " " + doc.data().lastName);
-                user = doc;
+};
 
-                // Printing last 5 messsages sent to the chat when the user enters the chat after logging in
-                messagesRefInOrder = db.collection("rooms").doc("general").collection("messages").orderBy("timestamp", "desc").limit(5);
-                messagesRefInOrder.get().then(function (collection) {
-                    var messagesInfo = [];
-                    collection.forEach(function (message) {
-                        messagesInfo.push([message.data().fromName, message.data().msg]);
-                    })
-                    for (let i = messagesInfo.length - 1; i >= 0; i--) {
-                        printMessage(messagesInfo[i][0], messagesInfo[i][1], i % 2 == 0 ? "darker" : "");
-                    }
-                });
-                // Updating the user's screen for any messages that are newly sent by other users 
-                messagesRefInOrder.onSnapshot(function (snapshot) {
-                    snapshotCounter += 1;
-                    if (snapshotCounter > 1) {
-                        snapshot.docChanges().forEach(function (change) {
-                            if (change.type === "added" && change.doc.data().fromEmail != user.data().email) {
-                                var messageAreaBody = document.getElementById("message-area").children[0];
-                                printMessage(change.doc.data().fromName, change.doc.data().msg, messageAreaBody.children[messageAreaBody.childElementCount - 1].classList.contains("darker") ? "" : " darker");
+function loadUpdateMessages(user) {
+    //user = currentUser;
+    name = user.displayName;
 
-                            }
-                        })
-                    }
-                })
-            }
+    email = user.email;
+
+
+    // Printing last 5 messsages sent to the chat when the user enters the chat after logging in
+    messagesRefInOrder = db.collection("rooms").doc("general").collection("messages").orderBy("timestamp", "desc").limit(5);
+    messagesRefInOrder.get().then(function (collection) {
+        var messagesInfo = [];
+        collection.forEach(function (message) {
+            messagesInfo.push([message.data().fromName, message.data().msg]);
         })
-    }
+        for (let i = messagesInfo.length - 1; i >= 0; i--) {
+            printMessage(messagesInfo[i][0], messagesInfo[i][1], i % 2 == 0 ? "darker" : "");
+        }
+    });
+    // Updating the user's screen for any messages that are newly sent by other users 
+    messagesRefInOrder.onSnapshot(function (snapshot) {
+        snapshotCounter += 1;
+        if (snapshotCounter > 1) {
+            snapshot.docChanges().forEach(function (change) {
+                if (change.type === "added" && change.doc.data().fromEmail != email) {
+                    var messageAreaBody = document.getElementById("message-area").children[0];
+                    printMessage(change.doc.data().fromName, change.doc.data().msg, messageAreaBody.children[messageAreaBody.childElementCount - 1].classList.contains("darker") ? "" : " darker");
+
+                }
+            })
+        }
+    })
 };
 
 // Write messages to database
@@ -208,8 +213,8 @@ function submit() {
 
     if (newMessage.length != 0) {
         db.collection("rooms").doc("general").collection("messages").add({
-                fromEmail: user.data().email,
-                fromName: user.data().firstName,
+                fromEmail: email,
+                fromName: name.split(" ")[0],
                 msg: newMessage,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             })
@@ -221,7 +226,7 @@ function submit() {
             });
         var messageAreaBody = document.getElementById("message-area").children[0];
 
-        printMessage(user.data().firstName, newMessage, messageAreaBody.children[messageAreaBody.childElementCount - 1].classList.contains("darker") ? "" : " darker");
+        printMessage(name.split(" ")[0], newMessage, messageAreaBody.childElementCount == 0 || messageAreaBody.children[messageAreaBody.childElementCount - 1].classList.contains("darker") ? "" : " darker");
         document.getElementById("input").value = "";
     }
 }
@@ -237,14 +242,43 @@ function enterSubmit() {
     }
 }
 
+document.getElementById("logout").onclick = function () {
+    firebase.auth().signOut().then(function () {
+        document.getElementById("userForm").style.display = "none";
+
+    })
+}
+
 function initApp() {
-    firebase.auth().onAuthStateChanged(function(currentUser) {
-        if(currentUser) {
-            user = currentUser;
-        } else {
-            user = null;
+    firebase.auth().onAuthStateChanged(function (user) {
+
+        if (user && user.emailVerified) {
+            document.getElementById("loginOpen").style.display = "none";
+            document.getElementById("signupOpen").style.display = "none";
+            document.getElementById("userOpen").style.display = "block";
+            document.querySelector("#userOpen").innerHTML = '<span class="glyphicon glyphicon-user"></span>' + user.displayName;
+            document.querySelector("#input").disabled = false;
+            loadUpdateMessages(user);
+        } else if (user && !(user.emailVerified)) {
+            document.getElementById("loginOpen").style.display = "block";
+            document.getElementById("signupOpen").style.display = "block";
+            document.getElementById("userOpen").style.display = "none";
+            document.querySelector("#input").disabled = true;
+            firebase.auth().signOut();
+            alert("Please verify your email.");
+
+        } else if (!user) {
+            document.getElementById("loginOpen").style.display = "block";
+            document.getElementById("signupOpen").style.display = "block";
+            document.getElementById("userOpen").style.display = "none";
+            document.querySelector("#input").disabled = true;
+            var messageAreaBody = document.getElementById("message-area").children[0];
+            messageAreaBody.innerHTML = "";
         }
     })
+}
+window.onload = function () {
+    initApp();
 }
 
 //Reverse function 

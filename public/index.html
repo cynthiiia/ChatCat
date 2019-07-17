@@ -75,6 +75,14 @@
                     </div>
                 </li>
             </ul>
+            <li>
+                <a id="userOpen"><span class="glyphicon glyphicon-user"></span></a>
+                <div class="form-popup" id="userForm">
+                    <form class="form-container">
+                        <a class="cancel" id="logout">Logout</a>
+                    </form>
+                </div>
+            </li>
         </div>
     </nav>
 
@@ -93,7 +101,7 @@
         </div>
         <div class="row" id="input-area">
             <div class="col-lg-10 col-md-10 col-sm-10">
-                <textarea class="form-control" rows="5" id="input" onkeydown="enterSubmit()"></textarea>
+                <textarea disabled class="form-control" rows="5" id="input" onkeydown="enterSubmit()"></textarea>
             </div>
             <div class="col-lg-2 col-md-2 col-sm-2">
                 <button type="submit" class="btn" id="submit">Submit</button>

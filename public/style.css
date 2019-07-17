@@ -66,7 +66,9 @@ body {
 .form-container .cancel {
     background-color: red;
 }
-
+#userOpen {
+    display:none;
+}
 
 
 /* Header/Title Area */
