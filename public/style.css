@@ -3,7 +3,7 @@ body {
     height: 100%;
 }
 
-.container-fluid {
+.container-fluid, .chat-container .row, .chat-container .row .chats, .chat-container .row .active-chat, .chat-container .row .input-area  {
     height: 100%;
 }
 
@@ -36,6 +36,9 @@ body {
     top: 0;
     width: 100%;
     z-index: 9;
+}
+.navbar img {
+    height: 50px;
 }
 
 .form-popup {
@@ -101,6 +104,7 @@ input+p {
 
 /* Header/Title Area */
 #header-area {
+    height:15%;
     padding-top: 52px;
 }
 
@@ -110,14 +114,14 @@ input+p {
     justify-content: center;
 }
 
-#header-area img {
+/* #header-area img {
     height: 60px;
     width: auto;
-}
+} */
 
 /* Messages section */
 #message-area {
-    height: 60%;
+    height: 65%;
     padding: 50px;
     outline: 2px solid rgb(175, 199, 209);
     outline-offset: -50px;
@@ -157,6 +161,7 @@ input+p {
 
 /*Submit messages area */
 #input-area {
+    height:20%;
     padding: 0 50px 0 50px;
 
 }

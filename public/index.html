@@ -6,6 +6,7 @@
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>ChatCat</title>
+    <link rel="icon" href="images/cat.png">
 
     <!-- Google Fonts -->
     <link
@@ -36,6 +37,7 @@
     <!--Navigation Bar-->
     <nav class="navbar navbar-inverse navbar-fixed-top">
         <div class="container-fluid">
+            <img src="images/cat.png">
             <ul class="nav navbar-nav navbar-right">
                 <li>
                     <a id="signupOpen"><span class="glyphicon glyphicon-user"></span> Sign Up</a>
@@ -86,27 +88,43 @@
         </div>
     </nav>
 
+    <div class="container-fluid chat-container">
+        <div class="row">
+            <div class="col-lg-1 chats">
 
-    <div class="container-fluid">
-        <div class="row" id="header-area">
-            <div class="col-lg-12 text-center">
-                <h1>Welcome to ChatCat!</h1>
-                <img src="images/cat.jpg">
             </div>
-        </div>
-        <div class="row" id="message-area">
-            <div class="col-lg-12">
+            <div class="col-lg-10 active-chat">
+                <div class="container-fluid">
+                    <div class="row" id="header-area">
+                        <div class="col-lg-12 text-center">
+                            <h1>Welcome to ChatCat!</h1>
+                            <!-- <img src="images/cat.png"> -->
+                        </div>
+                    </div>
+                    <div class="row" id="message-area">
+                        <div class="col-lg-12">
+                        </div>
+
+                    </div>
+                    <div class="row" id="input-area">
+                        <div class="col-lg-12 col-md-12 col-sm-12">
+                            <textarea disabled class="form-control" rows="5" id="input"
+                                onkeydown="enterSubmit()"></textarea>
+                            <button type="submit" class="btn" id="submit"><span
+                                    class="glyphicon glyphicon-send"></span></button>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="col-lg-1 active-chat-users">
+
             </div>
 
-        </div>
-        <div class="row" id="input-area">
-            <div class="col-lg-12 col-md-12 col-sm-12">
-                <textarea disabled class="form-control" rows="5" id="input" onkeydown="enterSubmit()"></textarea>
-                <button type="submit" class="btn" id="submit"><span class="glyphicon glyphicon-send"></span></button>
-            </div>
+
         </div>
     </div>
-
     <!--JS File-->
     <script src="main.js"></script>
 </body>
