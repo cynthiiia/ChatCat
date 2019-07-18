@@ -251,7 +251,7 @@ function initApp() {
             document.getElementById("loginOpen").style.display = "none";
             document.getElementById("signupOpen").style.display = "none";
             document.getElementById("userOpen").style.display = "block";
-            document.querySelector("#userOpen").innerHTML = '<span class="glyphicon glyphicon-user"></span>' + user.displayName;
+            document.querySelector("#userOpen").innerHTML = '<span class="glyphicon glyphicon-user"></span>' + "&nbsp;&nbsp;" + user.displayName;
             document.querySelector("#input").disabled = false;
             loadUpdateMessages(user);
         } else if (user && !(user.emailVerified)) {

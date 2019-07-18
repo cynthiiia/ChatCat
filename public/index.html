@@ -34,7 +34,7 @@
 
 <body>
     <!--Navigation Bar-->
-    <nav class="navbar navbar-inverse">
+    <nav class="navbar navbar-inverse navbar-fixed-top">
         <div class="container-fluid">
             <ul class="nav navbar-nav navbar-right">
                 <li>
@@ -74,15 +74,15 @@
                         </form>
                     </div>
                 </li>
+                <li>
+                    <a id="userOpen"><span class="glyphicon glyphicon-user"></span></a>
+                    <div class="form-popup" id="userForm">
+                        <form class="form-container">
+                            <a class="cancel" id="logout">Logout</a>
+                        </form>
+                    </div>
+                </li>
             </ul>
-            <li>
-                <a id="userOpen"><span class="glyphicon glyphicon-user"></span></a>
-                <div class="form-popup" id="userForm">
-                    <form class="form-container">
-                        <a class="cancel" id="logout">Logout</a>
-                    </form>
-                </div>
-            </li>
         </div>
     </nav>
 
@@ -100,12 +100,9 @@
 
         </div>
         <div class="row" id="input-area">
-            <div class="col-lg-10 col-md-10 col-sm-10">
+            <div class="col-lg-12 col-md-12 col-sm-12">
                 <textarea disabled class="form-control" rows="5" id="input" onkeydown="enterSubmit()"></textarea>
-            </div>
-            <div class="col-lg-2 col-md-2 col-sm-2">
-                <button type="submit" class="btn" id="submit">Submit</button>
-                <!-- <button type="button" class="btn" id="reverse">Reverse</button> -->
+                <button type="submit" class="btn" id="submit"><span class="glyphicon glyphicon-send"></span></button>
             </div>
         </div>
     </div>

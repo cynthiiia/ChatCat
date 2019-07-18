@@ -7,6 +7,28 @@ body {
     height: 100%;
 }
 
+/*Scrollbar */
+/* width */
+::-webkit-scrollbar {
+    width: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+
 /*Navbar */
 /* The popup form - hidden by default */
 .navbar {
@@ -28,7 +50,7 @@ body {
 
 /* Add styles to the form container */
 .form-container {
-    max-width: 300px;
+    max-width: 350px;
     padding: 10px;
     background-color: white;
 }
@@ -38,7 +60,7 @@ body {
 .form-container input[type=password] {
     width: 100%;
     padding: 15px;
-    margin: 5px 0 22px 0;
+    margin: 5px 0 10px 0;
     border: none;
     background: #f1f1f1;
 }
@@ -59,6 +81,7 @@ body {
     cursor: pointer;
     width: 100%;
     margin-bottom: 10px;
+    margin-top: 10px;
     opacity: 0.8;
 }
 
@@ -66,8 +89,13 @@ body {
 .form-container .cancel {
     background-color: red;
 }
+
 #userOpen {
-    display:none;
+    display: none;
+}
+
+input+p {
+    color: rgb(218, 42, 42);
 }
 
 
@@ -99,33 +127,54 @@ body {
     height: 100%;
     overflow-y: scroll;
 }
+
 .chatBox {
     border: 2px solid #dedede;
     background-color: #f1f1f1;
     border-radius: 5px;
     padding: 10px;
     margin: 10px 0;
-    width:100%;
+    width: 100%;
 
 }
 
 .chatBox::after {
-  content: "";
-  clear: both;
-  display: table;
+    content: "";
+    clear: both;
+    display: table;
 }
 
 /* Darker chat container */
 .darker {
-  border-color: #ccc;
-  background-color: #ddd;
+    border-color: #ccc;
+    background-color: #ddd;
 }
+
+.chatBox p {
+    word-wrap: break-word;
+}
+
 
 /*Submit messages area */
-#input-area .col-lg-10 {
+#input-area {
+    padding: 0 50px 0 50px;
 
-    padding: 0 0 0 50px;
 }
-#input-area .col-lg-10 textarea {
-    width:100%;
+
+#input-area .col-lg-12 {
+    width: 100%;
+    padding: 0;
+    position: relative;
+}
+
+#input-area .col-lg-12 textarea {
+    width: 100%;
+    padding: 6px 62px 6px 12px;
+    resize: none;
+}
+
+#submit {
+    position: absolute;
+    top: 10px;
+    right: 10px;
 }
