@@ -207,7 +207,7 @@ function submit() {
     newMessage = document.getElementById("input").value;
 
     if (newMessage.length != 0) {
-        db.collection("rooms").doc("general").collection("messages").add({
+        db.collection("rooms").doc("general").collection("messages").add({ // add a add room function that stores in each doc: name of room, useres in room and the messages
                 fromEmail: email,
                 fromName: name.split(" ")[0],
                 msg: newMessage,

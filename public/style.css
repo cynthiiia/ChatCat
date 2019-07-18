@@ -1,10 +1,33 @@
 html,
 body {
     height: 100%;
+    font-family: 'Didact Gothic', sans-serif;
 }
 
-.container-fluid, .chat-container .row, .chat-container .row .chats, .chat-container .row .active-chat, .chat-container .row .input-area  {
+/*Overall Chat website layout */
+.chat-container {
     height: 100%;
+    padding: 52px 0 0 0;
+}
+
+.chat-container .row,
+.chat-container .row .chats,
+.chat-container .row .active-chat,
+.chat-container .row .active-chat-users,
+.chat-container .row .active-chat .container-fluid {
+    height: 100%;
+}
+
+.chat-container * {
+
+    padding: 0 0 0 0;
+    margin: 0;
+}
+
+/* Font Sizes - MAYBE SIZE BASED ON THE MEDIA QUERIES THING */
+
+h5 {
+    font-size: 1vw;
 }
 
 /*Scrollbar */
@@ -29,6 +52,7 @@ body {
 }
 
 
+
 /*Navbar */
 /* The popup form - hidden by default */
 .navbar {
@@ -36,11 +60,18 @@ body {
     top: 0;
     width: 100%;
     z-index: 9;
-}
-.navbar img {
-    height: 50px;
+    padding: 0 15px 0 0px;
 }
 
+.navbar img {
+    height: 50px;
+    position: absolute;
+
+}
+
+.navbar-nav>li {
+    float:right ;
+}
 .form-popup {
     display: none;
     position: fixed;
@@ -102,33 +133,90 @@ input+p {
 }
 
 
+
+/*Chats (left side) area */
+.chats hr {
+    width: 75%;
+    height: 0.1px;
+    border-color: rgb(175, 199, 209);
+    background-color: rgb(175, 199, 209);
+    margin: 0 auto;
+
+}
+
+.chats {
+    outline: 2px solid rgb(175, 199, 209);
+
+}
+
+.chats .row.chats-header {
+    height: 60px;
+    border-bottom: 1px solid rgb(175, 199, 209);
+    /*fix this cause its no aligned*/
+
+}
+
+.chats .row {
+    height: 40px;
+    width: 100%;
+}
+
+.chats .row .col-lg-12 {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chats .row .col-lg-12:hover {
+    transition: .5s ease;
+    opacity: 0.5;
+    cursor: -webkit-grab;
+    cursor: grab;
+}
+
+.chats .row .col-lg-12 img {
+    height: 25px;
+}
+
+
+
+/* Active chat area */
 /* Header/Title Area */
+.active-chat hr {
+    width: 100%;
+    height: 0.1px;
+    border-color: rgb(175, 199, 209);
+    background-color: rgb(175, 199, 209);
+    margin: 0 auto;
+
+}
+
 #header-area {
-    height:15%;
-    padding-top: 52px;
+    height: 60px;
 }
 
 #header-area .col-lg-12 {
-    padding-top: 10px;
+    height: 100%;
+    padding: 0 20px 0 20px;
     display: flex;
-    justify-content: center;
+    align-items: center;
 }
-
-/* #header-area img {
-    height: 60px;
-    width: auto;
-} */
 
 /* Messages section */
 #message-area {
-    height: 65%;
-    padding: 50px;
+    height: 70%;
+    width: 100%;
+    padding: 20px 5px 20px 5px;
+    /* 
     outline: 2px solid rgb(175, 199, 209);
-    outline-offset: -50px;
+    outline-offset: -50px; */
 }
 
 #message-area .col-lg-12 {
     height: 100%;
+    width: 100%;
+    padding: 0px 20px 0px 20px;
     overflow-y: scroll;
 }
 
@@ -161,20 +249,21 @@ input+p {
 
 /*Submit messages area */
 #input-area {
-    height:20%;
-    padding: 0 50px 0 50px;
+    height: 20%;
+    padding: 0 25px 20px 25px;
 
 }
 
 #input-area .col-lg-12 {
     width: 100%;
-    padding: 0;
+    height: 100%;
     position: relative;
 }
 
 #input-area .col-lg-12 textarea {
     width: 100%;
-    padding: 6px 62px 6px 12px;
+    height: 100%;
+    padding: 6px 60px 6px 12px;
     resize: none;
 }
 
@@ -182,4 +271,14 @@ input+p {
     position: absolute;
     top: 10px;
     right: 10px;
+    padding: 5px 9px 5px 7px;
+}
+
+
+
+/*Active Chat Users Area */
+
+.active-chat-users {
+    outline: 2px solid rgb(175, 199, 209);
+
 }
