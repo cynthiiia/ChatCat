@@ -96,9 +96,9 @@ document.getElementById("signupSubmit").onclick = function () {
 
     if (validateEmail(email) & valiatePassword(password)) {
 
-        auth.createUserWithEmailAndPassword(email, password).then(function () {
+        auth.createUserWithEmailAndPassword(email, password).then(async function () { //check if this async/await is ok 
             document.getElementById("signupForm").style.display = "none";
-            var user = firebase.auth().currentUser;
+            var user = await firebase.auth().currentUser;
             user.sendEmailVerification();
             return user;
         }).then(function (user) {
@@ -135,19 +135,6 @@ document.getElementById("signupSubmit").onclick = function () {
     }
 }
 
-
-
-
-//Helper function to write messages with styling to the message-area
-function printMessage(firstName, message, darker) {
-    var messageAreaBody = document.getElementById("message-area").children[0];
-    messageAreaBody.innerHTML += "<div class='container chatBox " + darker + "'>" + "<p><b>" + firstName + ": </b></p>" + "<p>" + message + "</p></div>"
-    messageAreaBody.children[messageAreaBody.childElementCount - 1].scrollIntoView();
-
-}
-
-
-
 // login write to database 
 document.getElementById("loginSubmit").onclick = function () {
     var loginFormBody = document.querySelector("#loginForm .form-container");
@@ -173,6 +160,14 @@ document.getElementById("loginSubmit").onclick = function () {
         }
     });
 };
+
+//Helper function to write messages with styling to the message-area
+function printMessage(firstName, message, darker) {
+    var messageAreaBody = document.getElementById("message-area").children[0];
+    messageAreaBody.innerHTML += "<div class='container chatBox " + darker + "'>" + "<p><b>" + firstName + ": </b></p>" + "<p>" + message + "</p></div>"
+    messageAreaBody.children[messageAreaBody.childElementCount - 1].scrollIntoView();
+
+}
 
 function loadUpdateMessages(user) {
     //user = currentUser;
