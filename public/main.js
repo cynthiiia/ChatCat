@@ -31,10 +31,10 @@ document.getElementById("signupOpen").onclick = function () {
         document.getElementById("loginForm").style.display = "none";
     }
 }
-
 document.getElementById("signupCancel").onclick = function () {
     document.getElementById("signupForm").style.display = "none";
 }
+
 document.getElementById("loginOpen").onclick = function () {
     if (document.getElementById("loginForm").style.display == "block") {
         document.getElementById("loginForm").style.display = "none";
@@ -44,10 +44,10 @@ document.getElementById("loginOpen").onclick = function () {
         document.getElementById("signupForm").style.display = "none";
     }
 }
-
 document.getElementById("loginCancel").onclick = function () {
     document.getElementById("loginForm").style.display = "none";
 }
+
 document.getElementById("userOpen").onclick = function () {
     if (document.getElementById("userForm").style.display == "block") {
         document.getElementById("userForm").style.display = "none";
@@ -55,6 +55,18 @@ document.getElementById("userOpen").onclick = function () {
     } else {
         document.getElementById("userForm").style.display = "block";
     }
+}
+
+document.getElementById("createNewChat").onclick = function () {
+    if (document.getElementById("newChatForm").style.display == "block") {
+        document.getElementById("newChatForm").style.display = "none";
+
+    } else {
+        document.getElementById("newChatForm").style.display = "block";
+    }
+}
+document.getElementById("newChatCancel").onclick = function () {
+    document.getElementById("newChatForm").style.display = "none";
 }
 
 
@@ -160,6 +172,27 @@ document.getElementById("loginSubmit").onclick = function () {
         }
     });
 };
+
+document.getElementById("newChatSubmit").onclick = function () {
+    var newChatFormBody = document.querySelector("#newChatForm .form-container");
+    var chatName = newChatFormBody.querySelector("input[name='chatName']").value;
+
+    document.getElementById("newChatForm").style.display = "none";
+    newChatFormBody.querySelector("input[name='chatName']").value = "";
+    alert(chatName);
+
+    document.getElementById("chats").insertAdjacentHTML("beforeend", '<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12"><a id=' + chatName + '"><h5> &nbsp;' + chatName + '</h5></a></div></div><hr>');
+
+
+
+
+
+
+
+
+
+}
+
 
 //Helper function to write messages with styling to the message-area
 function printMessage(firstName, message, darker) {

@@ -11,7 +11,7 @@ body {
 }
 
 .chat-container .row,
-.chat-container .row .chats,
+.chat-container .row #chats,
 .chat-container .row .active-chat,
 .chat-container .row .active-chat-users,
 .chat-container .row .active-chat .container-fluid {
@@ -29,6 +29,7 @@ body {
 h5 {
     font-size: 1vw;
 }
+
 
 /*Scrollbar */
 /* width */
@@ -70,8 +71,9 @@ h5 {
 }
 
 .navbar-nav>li {
-    float:right ;
+    float: right;
 }
+
 .form-popup {
     display: none;
     position: fixed;
@@ -135,7 +137,7 @@ input+p {
 
 
 /*Chats (left side) area */
-.chats hr {
+#chats hr {
     width: 75%;
     height: 0.1px;
     border-color: rgb(175, 199, 209);
@@ -144,40 +146,91 @@ input+p {
 
 }
 
-.chats {
+#chats .row.chats-header {
+    height: 60px;
+}
+
+#chats .row.chats-header+hr {
+    width: 100%;
+    height: 0.1px;
+    border-color: rgb(175, 199, 209);
+    background-color: rgb(175, 199, 209);
+    margin: 0 auto;
+
+}
+
+#chats {
     outline: 2px solid rgb(175, 199, 209);
 
 }
 
-.chats .row.chats-header {
-    height: 60px;
-    border-bottom: 1px solid rgb(175, 199, 209);
-    /*fix this cause its no aligned*/
-
-}
-
-.chats .row {
+#chats .row {
     height: 40px;
     width: 100%;
 }
 
-.chats .row .col-lg-12 {
+#chats .row .col-lg-12 {
     height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.chats .row .col-lg-12:hover {
+#chats .row .col-lg-12:hover {
     transition: .5s ease;
     opacity: 0.5;
     cursor: -webkit-grab;
     cursor: grab;
 }
 
-.chats .row .col-lg-12 img {
+#chats .row .col-lg-12 img {
     height: 25px;
 }
+
+#createNewChat {
+    display: flex;
+    justify-content: center;
+}
+
+#chats a {
+    color: #333;
+    text-decoration: none;
+}
+
+/* New Chat popup styles*/
+/* The Modal (background) */
+#newChatForm {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background: rgba(39, 38, 38, 0.6);
+    padding-top: 50px;
+    border: none;
+}
+
+/* Modal Content/Box */
+#newChatForm .form-container {
+    background-color: #fefefe;
+    margin: 5% auto 15% auto;
+    /* 5% from the top, 15% from the bottom and centered */
+    border: 1px solid #888;
+    width: 80%;
+    /* Could be more or less, depending on screen size */
+    
+}
+
+/* Style the horizontal ruler */
+#newChatForm hr {
+    border: 1px solid #f1f1f1;
+    margin-bottom: 25px;
+}
+
+
 
 
 
