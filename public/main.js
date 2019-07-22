@@ -249,10 +249,12 @@ function loadOldMessages(chatID) {
     });
 }
 
+var unsubscribeNewMessages;
+
 function listenNewMessages(chatID) {
     // Updating the user's screen for any messages that are newly sent by other users 
     messagesRefInOrder = db.collection("chatMessages").doc(chatID).collection("messages").orderBy("timestamp", "desc");
-    messagesRefInOrder.onSnapshot(function (snapshot) {
+    unsubscribeNewMessages = messagesRefInOrder.onSnapshot(function (snapshot) {
         snapshotCounter += 1;
         if (snapshotCounter > 1) {
             snapshot.docChanges().forEach(function (change) {
@@ -267,6 +269,12 @@ function listenNewMessages(chatID) {
 };
 
 function loadChat(chatButton) {
+    if (snapshotCounter != 0) {
+        console.log("unsub");
+        unsubscribeNewMessages(); //Unsub to previous chat first
+        snapshotCounter = 0;
+
+    }
     activeChatID = chatButton.id; // see if this is appropriate?
     document.querySelector("#input").disabled = false;
     window.location.hash = activeChatID; //fix this
