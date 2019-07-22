@@ -326,7 +326,8 @@ function joinChat() {
         console.log(email);
         db.collection("chatMembers").doc(activeChatID).get().then(function (chatMembers) {
 
-            if (chatMembers != null && chatMembers.get(email) == null) { // add in if you are a chat member then you should just pull up the chat for them
+            if (chatMembers != null && chatMembers.get(email) == null) {
+                console.log("time to setup this existing chat for the new user"); // add in if you are a chat member then you should just pull up the chat for them
                 db.collection("chats").doc(activeChatID).get().then(function (chat) {
                     var chatName = chat.data().chatName;
                     //Add this user to the chat's user list
@@ -362,7 +363,7 @@ function initApp() {
             name = user.displayName;
             email = user.email;
             loadChatsColumn();
-            //joinChat();
+            joinChat();
         } else if (user && !(user.emailVerified)) {
             document.getElementById("loginOpen").style.display = "block";
             document.getElementById("signupOpen").style.display = "block";
