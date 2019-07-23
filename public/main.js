@@ -181,7 +181,7 @@ function printChatButton(chatName, chatID) {
 
 }
 
-document.getElementById("newChatSubmit").onclick = function () {
+document.getElementById("newChatSubmit").onclick = function () { //something wrong with this 
     var newChatFormBody = document.querySelector("#newChatForm .form-container");
     var chatName = newChatFormBody.querySelector("input[name='chatName']").value;
 
@@ -207,6 +207,7 @@ document.getElementById("newChatSubmit").onclick = function () {
         window.location.hash = activeChatID; // see if this is appropriate?
         document.querySelector("#header-area").children[0].children[1].innerHTML = chatName;
         clearChatMessages();
+        listenNewMessages(activeChatID);
     })
 
 
@@ -260,7 +261,7 @@ function listenNewMessages(chatID) {
             snapshot.docChanges().forEach(function (change) {
                 if (change.type === "added" && change.doc.data().fromEmail != email) {
                     var messageAreaBody = document.getElementById("message-area").children[0];
-                    printMessage(change.doc.data().fromName, change.doc.data().msg, messageAreaBody.children[messageAreaBody.childElementCount - 1].classList.contains("darker") ? "" : " darker");
+                    printMessage(change.doc.data().fromName, change.doc.data().msg, messageAreaBody.childElementCount == 0 || messageAreaBody.children[messageAreaBody.childElementCount - 1].classList.contains("darker") ? "" : " darker");
 
                 }
             })
@@ -346,6 +347,12 @@ function joinChat() {
                     db.collection("users").doc(email).collection("userChats").doc(activeChatID).set({
                         chatName: chatName
                     });
+                    if (snapshotCounter != 0) {
+                        console.log("unsub");
+                        unsubscribeNewMessages(); //Unsub to previous chat first
+                        snapshotCounter = 0;
+                
+                    }
                     printChatButton(chatName, activeChatID);
                     document.querySelector("#input").disabled = false;
                     document.querySelector("#header-area").children[0].children[1].innerHTML = chatName;
