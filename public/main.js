@@ -261,27 +261,19 @@ function loadMembers(chatID) {
 var unsubscribeNewMembers;
 
 function listenNewMembers(chatID) {
-    console.log("hello");
     unsubscribeNewMembers = db.collection("chatMembers").onSnapshot(function (snapshot) {
-        console.log("snapshot");
-
+        
         var newMembers = [];
         snapshot.docChanges().forEach(function (change) {
-            console.log(change.type + "  " + change.doc.id);
             if (change.type === "modified" && change.doc.id == chatID) {
-                console.log("logging members");
                 for (member in change.doc.data()) {
-                    console.log(member);
                     newMembers.push(member);
-                    console.log(newMembers[0]);
                 }
             }
         })
         for (member of newMembers) {
-            console.log(member);
             var activeChatUsersAreaMember = document.getElementById(member);
             if (!activeChatUsersAreaMember) {
-                console.log("printing" + member);
                 db.collection("users").doc(member).get().then(function (member) {
                     printMember(member.data().loggedIn, member.data().email, member.data().firstName, member.data().lastName);
                 })
@@ -318,33 +310,26 @@ function listenMembersStatus(chatID) {
 
 // Load the all information pertaining to the selected chat
 function loadChat(chatID) {
-    const promiseLoad = new Promise(function (resolve, reject) {
-        if (snapshotCounter != 0) {
-            console.log("unsub");
-            unsubscribeNewMessages(); //Unsub to previous chat first
-            unsubscribeNewMembers();
-            unsubscribeMembersStatus();
-            snapshotCounter = 0;
+    if (snapshotCounter != 0) {
+        console.log("unsub");
+        unsubscribeNewMessages(); //Unsub to previous chat first
+        unsubscribeNewMembers();
+        unsubscribeMembersStatus();
+        snapshotCounter = 0;
 
-        }
-        activeChatID = chatID; // see if this is appropriate?
-        window.location.hash = activeChatID; //fix this
-        document.querySelector("#header-area").children[0].children[1].innerHTML = document.getElementById(activeChatID).children[0].innerHTML;
-        document.querySelector("#input").disabled = false;
-        clearChatMessages();
-        loadOldMessages(activeChatID);
-        listenNewMessages(activeChatID);
-        clearMembers();
-        loadMembers(activeChatID);
-        listenMembersStatus(activeChatID);
-        resolve();
-        console.log("here3");
+    }
+    activeChatID = chatID; // see if this is appropriate?
+    window.location.hash = activeChatID; //fix this
+    document.querySelector("#header-area").children[0].children[1].innerHTML = document.getElementById(activeChatID).children[0].innerHTML;
+    document.querySelector("#input").disabled = false;
+    clearChatMessages();
+    loadOldMessages(activeChatID);
+    listenNewMessages(activeChatID);
+    clearMembers();
+    loadMembers(activeChatID);
+    listenNewMembers(activeChatID);
+    listenMembersStatus(activeChatID);
 
-    })
-    promiseLoad.then(function () {
-        console.log("here4")
-        listenNewMembers(activeChatID)
-    });
 }
 
 document.getElementById("newChatSubmit").onclick = function () {
@@ -464,26 +449,23 @@ function joinChat() {
                 db.collection("chats").doc(activeChatID).get().then(function (chat) {
                     var chatName = chat.data().chatName;
                     //Add this user to the chat's user list
-                    db.collection("chatMembers").doc(activeChatID).set({
+                    var promise1 =  db.collection("chatMembers").doc(activeChatID).set({
                         [email]: true
                     }, {
                         merge: true
-                    }).then(function() {
-                        // Add this chat to the user's chat collection 
-                        db.collection("users").doc(email).collection("userChats").doc(activeChatID).set({
-                            chatName: chatName
-                        });
-                        printChatButton(chatName, activeChatID);
-                        console.log('here1');
-                        // Print that a user has joined 
-                        //submit(name.split(' ')[0] + " has joined the chat!"); //problem with double messages for some reaosn 
-                        console.log('here2');
-    
-                        loadChat(activeChatID);
-
                     })
-                })
+                    // Add this chat to the user's chat collection 
+                    var promise2 = db.collection("users").doc(email).collection("userChats").doc(activeChatID).set({
+                        chatName: chatName
+                    });
+                    printChatButton(chatName, activeChatID);
+                    return Promise.all([promise1, promise2]);
+                }).then(function() {
+                    // Print that a user has joined 
+                    //submit(name.split(' ')[0] + " has joined the chat!"); //problem with double messages for some reaosn 
+                    loadChat(activeChatID);
 
+                })
             } else if (chatMembers != null && chatMembers.data()[email]) {
                 loadChat(activeChatID);
             }
