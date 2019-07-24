@@ -119,7 +119,8 @@ document.getElementById("signupSubmit").onclick = function () {
             db.collection("users").doc(email).set({
                     firstName: firstName,
                     lastName: lastName,
-                    email: email
+                    email: email,
+                    loggedIn: false
                 })
                 .then(function () {
                     console.log("Document written sucessfully for this user!");
@@ -175,51 +176,10 @@ document.getElementById("loginSubmit").onclick = function () {
 };
 
 
-//Helper function to write the chats in the chats column
+//Helper function to write the chats button in the chats column
 function printChatButton(chatName, chatID) {
-    document.querySelector("#chats-header + hr").insertAdjacentHTML("afterend", '<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12"><a id=' + chatID + ' onclick="loadChat(this)"><h5> &nbsp;' + chatName + '</h5></a></div></div><hr>');
+    document.querySelector("#chats-header + hr").insertAdjacentHTML("afterend", '<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12"><a id=' + chatID + ' onclick="loadChat(this.id)"><h5> &nbsp;' + chatName + '</h5></a></div></div><hr>');
 
-}
-
-document.getElementById("newChatSubmit").onclick = function () { //something wrong with this 
-    var newChatFormBody = document.querySelector("#newChatForm .form-container");
-    var chatName = newChatFormBody.querySelector("input[name='chatName']").value;
-
-    document.getElementById("newChatForm").style.display = "none";
-    newChatFormBody.querySelector("input[name='chatName']").value = "";
-
-    db.collection("chats").add({ //remember to make function to update doc and chat name if it changes 
-        chatName: chatName,
-        latestMessageTime: firebase.firestore.FieldValue.serverTimestamp() //shift the chats based on latest message?
-    }).then(function (docName) {
-        activeChatID = docName.id;
-        //Add this user to the chat's user list
-        db.collection("chatMembers").doc(activeChatID).set({
-            [email]: true
-        })
-        // Add this chat to the user's chat collection 
-        db.collection("users").doc(email).collection("userChats").doc(activeChatID).set({
-            chatName: chatName
-        });
-        //Setup the sidebar chats, the url, and the header of the message section 
-        printChatButton(chatName, activeChatID);
-        document.querySelector("#input").disabled = false;
-        window.location.hash = activeChatID; // see if this is appropriate?
-        document.querySelector("#header-area").children[0].children[1].innerHTML = chatName;
-        clearChatMessages();
-        listenNewMessages(activeChatID);
-    })
-
-
-}
-
-function loadChatsColumn() {
-    userChatsRef = db.collection("users").doc(email).collection("userChats").limit(2); //figure out how to load chats based on time??
-    userChatsRef.get().then(function (userChatsCollection) {
-        userChatsCollection.forEach(function (userChat) {
-            printChatButton(userChat.data().chatName, userChat.id);
-        })
-    })
 }
 
 function clearChatMessages() {
@@ -269,30 +229,116 @@ function listenNewMessages(chatID) {
     })
 };
 
-function loadChat(chatButton) {
+function clearMembers() {
+    var activeChatUsersArea = document.getElementById("active-chat-members");
+    activeChatUsersArea.innerHTML = "";
+}
+
+function printMember(loggedIn, memberEmail, firstName, lastName) {
+    var activeChatUsersArea = document.getElementById("active-chat-members");
+    activeChatUsersArea.innerHTML += '<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 ' + (loggedIn == true ? "logged-in" : "logged-out") + '"><a id=' + memberEmail + '><h5> &nbsp;' + firstName + " " + lastName + '</h5></a></div></div><hr>'
+}
+
+function loadMembers(chatID) {
+    db.collection("chatMembers").doc(chatID).get().then(function (chatMembers) {
+        for (member in chatMembers.data()) {
+            if (chatMembers.data()[member]) {
+                db.collection("users").doc(member).get().then(function (memberData) {
+                    printMember(memberData.data().loggedIn, memberData.data().email, memberData.data().firstName, memberData.data().lastName);
+                })
+
+            }
+
+        }
+    })
+}
+
+var unsubscribeMembersStatus;
+// issue with this is you will end up with a lot of reads because it looks at evrey single user change 
+function listenMembersStatus(chatID) {
+    console.log('memberstatus changed');
+    unsubscribeMembersStatus = db.collection("users").onSnapshot(function (snapshot) {
+        snapshot.docChanges().forEach(function (change) {
+            if (change.type == "modified") {
+                var changedUserData = change.doc.data();
+                db.collection("chatMembers").doc(chatID).get().then(function (chatMembers) {
+                    var currentStatus = changedUserData.loggedIn ? "logged-in" : "logged-out";
+                    var oldStatus;
+                    if (!document.getElementById(changedUserData.email).parentElement.classList.contains(currentStatus)) {
+                        oldStatus = currentStatus== "logged-in" ? "logged-out" : "logged-in";
+                    }
+                    console.log(oldStatus +' hi ' +currentStatus); // The status to put into the next line to see if it was the status that was changed for this user
+                    if (chatMembers.data()[changedUserData.email] && currentStatus != oldStatus) {
+                        document.getElementById(changedUserData.email).parentElement.classList.replace(oldStatus, currentStatus);
+                    }
+                })
+            }
+        })
+    })
+}
+
+// Load the all information pertaining to the selected chat
+function loadChat(chatID) {
     if (snapshotCounter != 0) {
         console.log("unsub");
         unsubscribeNewMessages(); //Unsub to previous chat first
+        listenMembersStatus();
         snapshotCounter = 0;
 
     }
-    activeChatID = chatButton.id; // see if this is appropriate?
-    document.querySelector("#input").disabled = false;
+    activeChatID = chatID; // see if this is appropriate?
     window.location.hash = activeChatID; //fix this
-    document.querySelector("#header-area").children[0].children[1].innerHTML = document.querySelector('#' + activeChatID).children[0].innerHTML;
+    document.querySelector("#header-area").children[0].children[1].innerHTML = document.getElementById(activeChatID).children[0].innerHTML;
+    document.querySelector("#input").disabled = false;
     clearChatMessages();
     loadOldMessages(activeChatID);
     listenNewMessages(activeChatID);
+    clearMembers();
+    loadMembers(activeChatID);
+    listenMembersStatus(activeChatID);
 
 }
 
+document.getElementById("newChatSubmit").onclick = function () {
+    var newChatFormBody = document.querySelector("#newChatForm .form-container");
+    var chatName = newChatFormBody.querySelector("input[name='chatName']").value;
+
+    document.getElementById("newChatForm").style.display = "none";
+    newChatFormBody.querySelector("input[name='chatName']").value = "";
+
+    db.collection("chats").add({ //remember to make function to update doc and chat name if it changes 
+        chatName: chatName,
+        latestMessageTime: firebase.firestore.FieldValue.serverTimestamp() //shift the chats based on latest message?
+    }).then(function (docName) {
+        activeChatID = docName.id;
+        //Add this user to the chat's user list
+        db.collection("chatMembers").doc(activeChatID).set({
+            [email]: true
+        })
+        // Add this chat to the user's chat collection 
+        db.collection("users").doc(email).collection("userChats").doc(activeChatID).set({
+            chatName: chatName
+        });
+        //Setup the sidebar chats, the url, and the header of the message section 
+        printChatButton(chatName, activeChatID);
+        loadChat(activeChatID);
+    })
+}
+
+function loadChatsColumn() {
+    userChatsRef = db.collection("users").doc(email).collection("userChats").limit(3); //figure out how to load chats based on time??
+    userChatsRef.get().then(function (userChatsCollection) {
+        userChatsCollection.forEach(function (userChat) {
+            printChatButton(userChat.data().chatName, userChat.id);
+        })
+    })
+}
 
 // Write messages to database
-function submit() {
-    newMessage = document.getElementById("input").value;
+function submit(newMessage = document.getElementById("input").value) {
 
     if (newMessage.length != 0) {
-        db.collection("chatMessages").doc(activeChatID).collection("messages").add({ // add a add room function that stores in each doc: name of room, useres in room and the messages
+        db.collection("chatMessages").doc(activeChatID).collection("messages").add({
                 fromEmail: email,
                 fromName: name.split(" ")[0],
                 msg: newMessage,
@@ -323,44 +369,46 @@ function enterSubmit() {
 }
 
 document.getElementById("logout").onclick = function () {
+
+
     firebase.auth().signOut().then(function () {
+        unsubscribeMembersStatus();
+        // Set that the user is offline 
+        db.collection("users").doc(email).update({
+            loggedIn: false
+        });
         document.getElementById("userForm").style.display = "none";
 
-    })
+    });
 }
 
 function joinChat() {
-    if (window.location.hash) { //need to chck if real chat id
+    if (window.location.hash) { //need to chck if real chat id - doesnt checking if chatmembers is null check this?
         activeChatID = window.location.hash.replace("#", "");
-        console.log(email);
+
         db.collection("chatMembers").doc(activeChatID).get().then(function (chatMembers) {
 
-            if (chatMembers != null && chatMembers.get(email) == null) {
-                console.log("time to setup this existing chat for the new user"); // add in if you are a chat member then you should just pull up the chat for them
+            if (chatMembers.exists && chatMembers.data()[email] != true) {
                 db.collection("chats").doc(activeChatID).get().then(function (chat) {
                     var chatName = chat.data().chatName;
                     //Add this user to the chat's user list
-                    db.collection("chatMembers").doc(activeChatID).update({
+                    db.collection("chatMembers").doc(activeChatID).set({
                         [email]: true
+                    }, {
+                        merge: true
                     })
                     // Add this chat to the user's chat collection 
                     db.collection("users").doc(email).collection("userChats").doc(activeChatID).set({
                         chatName: chatName
                     });
-                    if (snapshotCounter != 0) {
-                        console.log("unsub");
-                        unsubscribeNewMessages(); //Unsub to previous chat first
-                        snapshotCounter = 0;
-                
-                    }
                     printChatButton(chatName, activeChatID);
-                    document.querySelector("#input").disabled = false;
-                    document.querySelector("#header-area").children[0].children[1].innerHTML = chatName;
-                    clearChatMessages();
-                    loadOldMessages(activeChatID);
-                    listenNewMessages(activeChatID);
+                    loadChat(activeChatID);
+                    // Print that a user has joined 
+                    //submit(name.split(' ')[0] + " has joined the chat!"); //problem with double messages for some reaosn 
                 })
 
+            } else if (chatMembers != null && chatMembers.data()[email]) {
+                loadChat(activeChatID);
             }
         })
     }
@@ -377,6 +425,9 @@ function initApp() {
             document.querySelector("#userOpen").innerHTML = '<span class="glyphicon glyphicon-user"></span>' + "&nbsp;&nbsp;" + user.displayName;
             name = user.displayName;
             email = user.email;
+            db.collection("users").doc(email).update({
+                loggedIn: true
+            });
             loadChatsColumn();
             joinChat();
         } else if (user && !(user.emailVerified)) {
@@ -392,23 +443,13 @@ function initApp() {
             document.getElementById("signupOpen").style.display = "block";
             document.getElementById("userOpen").style.display = "none";
             document.querySelector("#input").disabled = true;
-            var messageAreaBody = document.getElementById("message-area").children[0];
-            messageAreaBody.innerHTML = "";
+            clearChatMessages();
+            clearMembers();
+
+            // need to clear stuff on sign out ************************************
         }
     })
 }
 window.onload = function () {
     initApp();
 }
-
-
-
-//Reverse function 
-/* document.getElementById("reverse").onclick = function () {
-    document.getElementById("message-area").children[0].innerHTML += "<p>________________________</p>";
-    document.getElementById("message-area").children[0].innerHTML += "<p>Your messages in reverse:</p>";
-    for (let i = messages.length - 1; i >= 0; i--) {
-        document.getElementById("message-area").children[0].innerHTML += "<p>" + messages[i] + "</p>";
-    }
-    document.getElementById("message-area").children[0].innerHTML += "<p>________________________</p>";
-} */
