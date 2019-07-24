@@ -78,7 +78,7 @@ function validateEmail(email) {
     signupFormBody.children[7].innerHTML = "";
 
     if ((re.test(String(email).toLowerCase())) == false) {
-        signupFormBody.children[7].innerHTML += "Please enter a valid email";
+        signupFormBody.children[7].innerHTML += "Please enter a valid email"; // Fix innerhtml issues
         return false;
     } else {
         return true;
@@ -184,7 +184,9 @@ function printChatButton(chatName, chatID) {
 
 function clearChatMessages() {
     var messageAreaBody = document.getElementById("message-area").children[0];
-    messageAreaBody.innerHTML = "";
+    while (messageAreaBody.hasChildNodes()) {
+        messageAreaBody.removeChild(messageAreaBody.firstChild);
+    }
 }
 
 
@@ -231,7 +233,9 @@ function listenNewMessages(chatID) {
 
 function clearMembers() {
     var activeChatUsersArea = document.getElementById("active-chat-members");
-    activeChatUsersArea.innerHTML = "";
+    while (activeChatUsersArea.hasChildNodes()) {
+        activeChatUsersArea.removeChild(activeChatUsersArea.firstChild);
+    }
 }
 
 function printMember(loggedIn, memberEmail, firstName, lastName) {
@@ -244,6 +248,7 @@ function loadMembers(chatID) {
         for (member in chatMembers.data()) {
             if (chatMembers.data()[member]) {
                 db.collection("users").doc(member).get().then(function (memberData) {
+                    console.log(member + " " + memberData.data());
                     printMember(memberData.data().loggedIn, memberData.data().email, memberData.data().firstName, memberData.data().lastName);
                 })
 
@@ -254,9 +259,8 @@ function loadMembers(chatID) {
 }
 
 var unsubscribeMembersStatus;
-// issue with this is you will end up with a lot of reads because it looks at evrey single user change 
+// issue with this is you will end up with a lot of reads because it looks at evrey single user change --> make more efficient!!!!!!!!!!!!!
 function listenMembersStatus(chatID) {
-    console.log('memberstatus changed');
     unsubscribeMembersStatus = db.collection("users").onSnapshot(function (snapshot) {
         snapshot.docChanges().forEach(function (change) {
             if (change.type == "modified") {
@@ -265,9 +269,8 @@ function listenMembersStatus(chatID) {
                     var currentStatus = changedUserData.loggedIn ? "logged-in" : "logged-out";
                     var oldStatus;
                     if (!document.getElementById(changedUserData.email).parentElement.classList.contains(currentStatus)) {
-                        oldStatus = currentStatus== "logged-in" ? "logged-out" : "logged-in";
+                        oldStatus = currentStatus == "logged-in" ? "logged-out" : "logged-in";
                     }
-                    console.log(oldStatus +' hi ' +currentStatus); // The status to put into the next line to see if it was the status that was changed for this user
                     if (chatMembers.data()[changedUserData.email] && currentStatus != oldStatus) {
                         document.getElementById(changedUserData.email).parentElement.classList.replace(oldStatus, currentStatus);
                     }
@@ -282,7 +285,7 @@ function loadChat(chatID) {
     if (snapshotCounter != 0) {
         console.log("unsub");
         unsubscribeNewMessages(); //Unsub to previous chat first
-        listenMembersStatus();
+        unsubscribeMembersStatus();
         snapshotCounter = 0;
 
     }
@@ -323,6 +326,15 @@ document.getElementById("newChatSubmit").onclick = function () {
         printChatButton(chatName, activeChatID);
         loadChat(activeChatID);
     })
+}
+
+function clearChatsColumn() {
+    var chatsColumn = document.getElementById("chats");
+    var numChatElements = chatsColumn.childElementCount;
+    for (var i = numChatElements - 3; i >= 2; i--) {
+        console.log(numChatElements - 2 + " " + i + chatsColumn.children[i]);
+        chatsColumn.removeChild(chatsColumn.children[i]);
+    }
 }
 
 function loadChatsColumn() {
@@ -372,12 +384,27 @@ document.getElementById("logout").onclick = function () {
 
 
     firebase.auth().signOut().then(function () {
-        unsubscribeMembersStatus();
+        document.getElementById("userForm").style.display = "none";
+        console.log(snapshotCounter);
+        if (snapshotCounter != 0) {
+            console.log("unsub");
+            unsubscribeNewMessages();
+            unsubscribeMembersStatus();
+            snapshotCounter = 0;
+
+        }
+        console.log(snapshotCounter);
         // Set that the user is offline 
-        db.collection("users").doc(email).update({
+        db.collection("users").doc(email).update({ // gotta fix tihs part i think??
             loggedIn: false
         });
-        document.getElementById("userForm").style.display = "none";
+        activeChatID = "";
+        name, email = "";
+        window.location.hash = "";
+        clearChatsColumn();
+        clearChatMessages();
+        clearMembers();
+        document.querySelector("#header-area").children[0].children[1].innerHTML = "Welcome to ChatCat!";
 
     });
 }
@@ -443,10 +470,6 @@ function initApp() {
             document.getElementById("signupOpen").style.display = "block";
             document.getElementById("userOpen").style.display = "none";
             document.querySelector("#input").disabled = true;
-            clearChatMessages();
-            clearMembers();
-
-            // need to clear stuff on sign out ************************************
         }
     })
 }
