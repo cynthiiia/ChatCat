@@ -74,11 +74,11 @@ document.getElementById("newChatCancel").onclick = function () {
 // Email checker for signups
 function validateEmail(email) {
     var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; // check this
-    var signupFormBody = document.querySelector("#signupForm .form-container");
-    signupFormBody.children[7].innerHTML = "";
+    var signupFormEmailWarning = document.querySelector("#signupForm .form-container").children[7];
+    signupFormEmailWarning.textContent = "";
 
     if ((re.test(String(email).toLowerCase())) == false) {
-        signupFormBody.children[7].innerHTML += "Please enter a valid email"; // Fix innerhtml issues
+        signupFormEmailWarning.textContent = "Please enter a valid email"; // Fix innerhtml issues
         return false;
     } else {
         return true;
@@ -87,11 +87,11 @@ function validateEmail(email) {
 //Password checker for signups
 function valiatePassword(password) {
     var re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    var signupFormBody = document.querySelector("#signupForm .form-container");
-    signupFormBody.children[10].innerHTML = "";
+    var signupFormPasswordWarning = document.querySelector("#signupForm .form-container").children[10];
+    signupFormPasswordWarning.textContent = "";
 
     if (re.test(String(password)) == false) {
-        signupFormBody.children[10].innerHTML += "Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character";
+        signupFormPasswordWarning.textContent = "Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character";
         return false;
     } else {
         return true;
@@ -163,14 +163,15 @@ document.getElementById("loginSubmit").onclick = function () {
         var errorCode = error.code;
         var errorMessage = error.message;
 
+        var loginFormWarning = document.querySelector("#loginForm .form-container").children[7];
         if (errorCode === 'auth/wrong-password') {
-            document.querySelector("#loginForm .form-container").children[7].innerHTML = "Username and/or password invalid.";
+            loginFormWarning.textContent = "Username and/or password invalid.";
 
         } else if (errorCode === 'user-not-found') {
-            document.querySelector("#loginForm .form-container").children[7].innerHTML = "Username and/or password invalid.";
+            loginFormWarning.textContent = "Username and/or password invalid.";
 
         } else {
-            document.querySelector("#loginForm .form-container").children[7].innerHTML = errorMessage;
+            loginFormWarning.textContent = errorMessage;
         }
     });
 };
@@ -178,7 +179,7 @@ document.getElementById("loginSubmit").onclick = function () {
 
 //Helper function to write the chats button in the chats column
 function printChatButton(chatName, chatID) {
-    document.querySelector("#chats-header + hr").insertAdjacentHTML("afterend", '<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12"><a id=' + chatID + ' onclick="loadChat(this.id)"><h5> &nbsp;' + chatName + '</h5></a></div></div><hr>');
+    document.querySelector("#chats-header + hr").insertAdjacentHTML("afterend", '<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12"><a id=' + chatID + ' onclick="loadChat(this.id)"><h5>' + chatName + '</h5></a></div></div><hr>');
 
 }
 
@@ -193,7 +194,7 @@ function clearChatMessages() {
 //Helper function to write messages with styling to the message-area
 function printMessage(firstName, message, darker) {
     var messageAreaBody = document.getElementById("message-area").children[0];
-    messageAreaBody.innerHTML += "<div class='container chatBox " + darker + "'>" + "<p><b>" + firstName + ": </b></p>" + "<p>" + message + "</p></div>"
+    messageAreaBody.insertAdjacentHTML("beforeend", "<div class='container chatBox " + darker + "'>" + "<p><b>" + firstName + ": </b></p>" + "<p>" + message + "</p></div>");
     messageAreaBody.children[messageAreaBody.childElementCount - 1].scrollIntoView();
 
 }
@@ -240,7 +241,7 @@ function clearMembers() {
 
 function printMember(loggedIn, memberEmail, firstName, lastName) {
     var activeChatUsersArea = document.getElementById("active-chat-members");
-    activeChatUsersArea.innerHTML += '<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 ' + (loggedIn == true ? "logged-in" : "logged-out") + '"><a id=' + memberEmail + '><h5> &nbsp;' + firstName + " " + lastName + '</h5></a></div></div><hr>'
+    activeChatUsersArea.insertAdjacentHTML("beforeend", '<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 ' + (loggedIn == true ? "logged-in" : "logged-out") + '"><a id=' + memberEmail + '><h5> &nbsp;' + firstName + " " + lastName + '</h5></a></div></div><hr>');
 }
 
 function loadMembers(chatID) {
@@ -320,7 +321,7 @@ function loadChat(chatID) {
     }
     activeChatID = chatID; // see if this is appropriate?
     window.location.hash = activeChatID; //fix this
-    document.querySelector("#header-area").children[0].children[1].innerHTML = document.getElementById(activeChatID).children[0].innerHTML;
+    document.querySelector("#header-area").children[0].children[1].textContent = document.getElementById(activeChatID).children[0].innerHTML;
     document.querySelector("#input").disabled = false;
     clearChatMessages();
     loadOldMessages(activeChatID);
@@ -434,7 +435,7 @@ document.getElementById("logout").onclick = function () {
         clearChatsColumn();
         clearChatMessages();
         clearMembers();
-        document.querySelector("#header-area").children[0].children[1].innerHTML = "Welcome to ChatCat!";
+        document.querySelector("#header-area").children[0].children[1].textContent = "Welcome to ChatCat!";
 
     });
 }
@@ -481,7 +482,7 @@ function initApp() {
             document.getElementById("loginOpen").style.display = "none";
             document.getElementById("signupOpen").style.display = "none";
             document.getElementById("userOpen").style.display = "block";
-            document.querySelector("#userOpen").innerHTML = '<span class="glyphicon glyphicon-user"></span>' + "&nbsp;&nbsp;" + user.displayName;
+            document.querySelector("#userOpen").innerHTML = '<span class="glyphicon glyphicon-user"></span>' + "&nbsp;&nbsp;" + user.displayName; // dont think this should be an isue?
             name = user.displayName;
             email = user.email;
             db.collection("users").doc(email).update({

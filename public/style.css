@@ -133,6 +133,9 @@ h5 {
 input+p {
     color: rgb(218, 42, 42);
 }
+#loginForm .form-container p {
+    margin-top: 10px;
+}
 
 
 
