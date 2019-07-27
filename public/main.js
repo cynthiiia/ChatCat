@@ -120,7 +120,8 @@ document.getElementById("signupSubmit").onclick = function () {
                     firstName: firstName,
                     lastName: lastName,
                     email: email,
-                    loggedIn: false
+                    loggedIn: false,
+                    userChatsOrder: []
                 })
                 .then(function () {
                     console.log("Document written sucessfully for this user!");
@@ -176,10 +177,57 @@ document.getElementById("loginSubmit").onclick = function () {
     });
 };
 
+//Functions for drag and drop
+function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+}
+
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function drop(ev) {
+    ev.preventDefault();
+    var sourceElement = document.getElementById(ev.dataTransfer.getData("text")).firstElementChild;
+    var chatName = sourceElement.textContent;
+    var chatID = sourceElement.id;
+    var targetID = ev.currentTarget.children[0].children[0].id;
+    // delete the item first 
+    sourceElement.parentElement.parentElement.parentElement.removeChild(sourceElement.parentElement.parentElement);
+
+    // reprint the chat button
+    printChatButton(chatName, chatID, targetID);
+
+    // neeed to still update the database so that it pulls properly
+    db.collection("users").doc(email).get().then(function (user) {
+        var updatedUserChatsOrder = [];
+        Object.values(user.data().userChatsOrder).map((item) => {
+            if (item == targetID) {
+                updatedUserChatsOrder.push(chatID);
+                updatedUserChatsOrder.push(item);
+            } else if (item == chatID){
+                
+            } else {
+                updatedUserChatsOrder.push(item);
+            }
+        })
+        db.collection("users").doc(email).update({
+            userChatsOrder: updatedUserChatsOrder
+        })
+        
+
+    })
+}
 
 //Helper function to write the chats button in the chats column
-function printChatButton(chatName, chatID) {
-    document.querySelector("#chats-header + hr").insertAdjacentHTML("afterend", '<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12"><a id=' + chatID + ' onclick="loadChat(this.id)"><h5>' + chatName + '</h5></a></div></div><hr>');
+function printChatButton(chatName, chatID, location) {
+    if (location == "top") {
+        document.querySelector("#chats-header + hr").insertAdjacentHTML("afterend", '<div class="row"  ondrop= "drop(event)" ondragover="allowDrop(event)"><div  draggable="true" ondragstart="drag(event)" id = "drag' + chatID + '" class="col-lg-12 col-md-12 col-sm-12 col-xs-12" ><a id=' + chatID + ' onclick="loadChat(this.id)"><h5>' + chatName + '</h5></a></div></div><hr>');
+    } else if (location == "bottom") {
+        document.getElementById("createNewChat").parentElement.parentElement.insertAdjacentHTML("beforebegin", '<div class="row"  ondrop= "drop(event)" ondragover="allowDrop(event)"><div  draggable="true" ondragstart="drag(event)" id = "col' + chatID + '" class="col-lg-12 col-md-12 col-sm-12 col-xs-12" ><a id=' + chatID + ' onclick="loadChat(this.id)"><h5>' + chatName + '</h5></a></div></div><hr>');
+    } else {
+        document.getElementById(location).parentElement.parentElement.insertAdjacentHTML("beforebegin", '<div class="row"  ondrop= "drop(event)" ondragover="allowDrop(event)"><div  draggable="true" ondragstart="drag(event)" id = "col' + chatID + '" class="col-lg-12 col-md-12 col-sm-12 col-xs-12" ><a id=' + chatID + ' onclick="loadChat(this.id)"><h5>' + chatName + '</h5></a></div></div><hr>');
+    }
 
 }
 
@@ -263,7 +311,7 @@ var unsubscribeNewMembers;
 
 function listenNewMembers(chatID) {
     unsubscribeNewMembers = db.collection("chatMembers").onSnapshot(function (snapshot) {
-        
+
         var newMembers = [];
         snapshot.docChanges().forEach(function (change) {
             if (change.type === "modified" && change.doc.id == chatID) {
@@ -346,16 +394,29 @@ document.getElementById("newChatSubmit").onclick = function () {
     }).then(function (docName) {
         activeChatID = docName.id;
         //Add this user to the chat's user list
-        db.collection("chatMembers").doc(activeChatID).set({
+        var promise1 = db.collection("chatMembers").doc(activeChatID).set({
             [email]: true
         })
         // Add this chat to the user's chat collection 
-        db.collection("users").doc(email).collection("userChats").doc(activeChatID).set({
+        var promise2 = db.collection("users").doc(email).collection("userChats").doc(activeChatID).set({
             chatName: chatName
         });
         //Setup the sidebar chats, the url, and the header of the message section 
-        printChatButton(chatName, activeChatID);
+        printChatButton(chatName, activeChatID, "top");
+        return Promise.all([promise1, promise2]);
+    }).then(function () {
         loadChat(activeChatID);
+        // List this chat in the order
+        return db.collection("users").doc(email).get();
+    }).then(function (user) {
+        var updatedUserChatsOrder = [activeChatID];
+        Object.values(user.data().userChatsOrder).map((item) => {
+            updatedUserChatsOrder.push(item);
+        })
+        db.collection("users").doc(email).update({
+            userChatsOrder: updatedUserChatsOrder
+        })
+
     })
 }
 
@@ -368,13 +429,41 @@ function clearChatsColumn() {
     }
 }
 
+
+
 function loadChatsColumn() {
-    userChatsRef = db.collection("users").doc(email).collection("userChats").limit(3); //figure out how to load chats based on time??
-    userChatsRef.get().then(function (userChatsCollection) {
-        userChatsCollection.forEach(function (userChat) {
-            printChatButton(userChat.data().chatName, userChat.id);
+    db.collection("users").doc(email).get().then(function (user) {
+        var chatsToLoad = [];
+        Object.values(user.data().userChatsOrder).map((item) => {
+            chatsToLoad.push(item);
         })
+        return chatsToLoad;
+    }).then(function (chatsToLoad) {
+        var promises = [];
+        for (chat of chatsToLoad) {
+            console.log(chat);
+            promises.push(db.collection("users").doc(email).collection("userChats").doc(chat).get());
+        }
+        promises.push(new Promise((resolve, reject) => {
+            resolve(chatsToLoad);
+        }))
+        return Promise.all(promises);
+    }).then(function (resolutions) {
+        var chatIds = resolutions[resolutions.length - 1];
+        for (var i = 0; i < resolutions.length - 1; i++) {
+            console.log(chatIds[i]);
+            printChatButton(resolutions[i].data().chatName, chatIds[i], "bottom");
+
+        }
     })
+
+    /* 
+        userChatsRef = db.collection("users").doc(email).collection("userChats").limit(3); //figure out how to load chats based on time??
+        userChatsRef.get().then(function (userChatsCollection) {
+            userChatsCollection.forEach(function (userChat) {
+                printChatButton(userChat.data().chatName, userChat.id);
+            })
+        }) */
 }
 
 // Write messages to database
@@ -450,7 +539,7 @@ function joinChat() {
                 db.collection("chats").doc(activeChatID).get().then(function (chat) {
                     var chatName = chat.data().chatName;
                     //Add this user to the chat's user list
-                    var promise1 =  db.collection("chatMembers").doc(activeChatID).set({
+                    var promise1 = db.collection("chatMembers").doc(activeChatID).set({
                         [email]: true
                     }, {
                         merge: true
@@ -459,15 +548,24 @@ function joinChat() {
                     var promise2 = db.collection("users").doc(email).collection("userChats").doc(activeChatID).set({
                         chatName: chatName
                     });
-                    printChatButton(chatName, activeChatID);
+                    printChatButton(chatName, activeChatID, "top");
                     return Promise.all([promise1, promise2]);
-                }).then(function() {
+                }).then(function () {
                     // Print that a user has joined 
                     //submit(name.split(' ')[0] + " has joined the chat!"); //problem with double messages for some reaosn 
                     loadChat(activeChatID);
+                    return db.collection("users").doc(email).get();
+                }).then(function (user) {
+                    var updatedUserChatsOrder = [activeChatID];
+                    Object.values(user.data().userChatsOrder).map((item) => {
+                        updatedUserChatsOrder.push(item);
+                    })
+                    db.collection("users").doc(email).update({
+                        userChatsOrder: updatedUserChatsOrder
+                    })
 
                 })
-            } else if (chatMembers != null && chatMembers.data()[email]) {
+            } else if (chatMembers.exists && chatMembers.data()[email]) {
                 loadChat(activeChatID);
             }
         })
@@ -487,9 +585,13 @@ function initApp() {
             email = user.email;
             db.collection("users").doc(email).update({
                 loggedIn: true
-            });
-            loadChatsColumn();
-            joinChat();
+            }).then(function () {
+                loadChatsColumn();
+
+            }).then(function () {
+                joinChat();
+
+            })
         } else if (user && !(user.emailVerified)) {
             document.getElementById("loginOpen").style.display = "block";
             document.getElementById("signupOpen").style.display = "block";
