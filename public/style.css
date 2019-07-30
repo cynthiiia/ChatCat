@@ -360,7 +360,6 @@ input+p {
 #active-chat-members .row .col-lg-12 {
     height: 100%;
     display: flex;
-    justify-content: center;
     align-items: center;
 }
 
@@ -374,12 +373,17 @@ input+p {
 #active-chat-members a {
     color: #333;
     text-decoration: none;
+    display: flex;
+    align-items: center;
 }
 
-#active-chat-members .logged-in {
-    background-color: green;
+#active-chat-members .row .col-lg-12 img {
+    height: 25px;
+}
+#active-chat-members .logged-in img {
+    content:url("images/catHeadStatusOnline.png");
 }
 
-#active-chat-members .logged-out {
-    background-color: red;
-}
+#active-chat-members .logged-out img {
+    content:url("images/catHeadStatusOffline.png");
+} 

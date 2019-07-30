@@ -193,6 +193,7 @@ function drop(ev) {
     var chatID = sourceElement.id;
     var targetID = ev.currentTarget.children[0].children[0].id;
     // delete the item first 
+    sourceElement.parentElement.parentElement.parentElement.removeChild(sourceElement.parentElement.parentElement.nextElementSibling);
     sourceElement.parentElement.parentElement.parentElement.removeChild(sourceElement.parentElement.parentElement);
 
     // reprint the chat button
@@ -205,8 +206,8 @@ function drop(ev) {
             if (item == targetID) {
                 updatedUserChatsOrder.push(chatID);
                 updatedUserChatsOrder.push(item);
-            } else if (item == chatID){
-                
+            } else if (item == chatID) {
+
             } else {
                 updatedUserChatsOrder.push(item);
             }
@@ -214,7 +215,7 @@ function drop(ev) {
         db.collection("users").doc(email).update({
             userChatsOrder: updatedUserChatsOrder
         })
-        
+
 
     })
 }
@@ -289,7 +290,12 @@ function clearMembers() {
 
 function printMember(loggedIn, memberEmail, firstName, lastName) {
     var activeChatUsersArea = document.getElementById("active-chat-members");
-    activeChatUsersArea.insertAdjacentHTML("beforeend", '<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 ' + (loggedIn == true ? "logged-in" : "logged-out") + '"><a id=' + memberEmail + '><h5> &nbsp;' + firstName + " " + lastName + '</h5></a></div></div><hr>');
+    if (loggedIn) {
+        activeChatUsersArea.insertAdjacentHTML("beforeend", '<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 ' + (loggedIn == true ? "logged-in" : "logged-out") + '"><a id=' + memberEmail + '><img src="images/catHeadStatusOnline.png"><h5> &nbsp;' + firstName + " " + lastName + '</h5></a></div></div><hr>');
+    } else {
+        activeChatUsersArea.insertAdjacentHTML("beforeend", '<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 ' + (loggedIn == true ? "logged-in" : "logged-out") + '"><a id=' + memberEmail + '><img src="images/catHeadStatusOffline.png"><h5> &nbsp;' + firstName + " " + lastName + '</h5></a></div></div><hr>');
+
+    }
 }
 
 function loadMembers(chatID) {
@@ -336,20 +342,25 @@ function listenNewMembers(chatID) {
 var unsubscribeMembersStatus;
 // issue with this is you will end up with a lot of reads because it looks at evrey single user change --> make more efficient!!!!!!!!!!!!!
 function listenMembersStatus(chatID) {
+    console.log("member status");
     unsubscribeMembersStatus = db.collection("users").onSnapshot(function (snapshot) {
         snapshot.docChanges().forEach(function (change) {
+            console.log("each change");
             if (change.type == "modified") {
+                console.log("modified");
                 var changedUserData = change.doc.data();
                 db.collection("chatMembers").doc(chatID).get().then(function (chatMembers) {
-                    // Determine current and old status of the user with changed data 
-                    var currentStatus = changedUserData.loggedIn ? "logged-in" : "logged-out";
-                    var oldStatus;
-                    if (!document.getElementById(changedUserData.email).parentElement.classList.contains(currentStatus)) {
-                        oldStatus = currentStatus == "logged-in" ? "logged-out" : "logged-in";
-                    }
-                    // Determine if user is a user of the active chat and compare to see if current and old status are the same, if not then need to update the button on front end 
-                    if (chatMembers.data()[changedUserData.email] && currentStatus != oldStatus) {
-                        document.getElementById(changedUserData.email).parentElement.classList.replace(oldStatus, currentStatus);
+                    if (document.getElementById(changedUserData.email)) {
+                        // Determine current and old status of the user with changed data 
+                        var currentStatus = changedUserData.loggedIn ? "logged-in" : "logged-out";
+                        var oldStatus;
+                        if (!document.getElementById(changedUserData.email).parentElement.classList.contains(currentStatus)) {
+                            oldStatus = currentStatus == "logged-in" ? "logged-out" : "logged-in";
+                        }
+                        // Determine if user is a user of the active chat and compare to see if current and old status are the same, if not then need to update the button on front end 
+                        if (chatMembers.data()[changedUserData.email] && currentStatus != oldStatus) {
+                            document.getElementById(changedUserData.email).parentElement.classList.replace(oldStatus, currentStatus);
+                        }
                     }
                 })
             }
@@ -369,6 +380,7 @@ function loadChat(chatID) {
     }
     activeChatID = chatID; // see if this is appropriate?
     window.location.hash = activeChatID; //fix this
+    console.log("printing the title");
     document.querySelector("#header-area").children[0].children[1].textContent = document.getElementById(activeChatID).children[0].innerHTML;
     document.querySelector("#input").disabled = false;
     clearChatMessages();
@@ -432,7 +444,7 @@ function clearChatsColumn() {
 
 
 function loadChatsColumn() {
-    db.collection("users").doc(email).get().then(function (user) {
+    return db.collection("users").doc(email).get().then(function (user) {
         var chatsToLoad = [];
         Object.values(user.data().userChatsOrder).map((item) => {
             chatsToLoad.push(item);
@@ -455,7 +467,9 @@ function loadChatsColumn() {
             printChatButton(resolutions[i].data().chatName, chatIds[i], "bottom");
 
         }
+        console.log("loading chats columN");
     })
+
 
     /* 
         userChatsRef = db.collection("users").doc(email).collection("userChats").limit(3); //figure out how to load chats based on time??
@@ -575,7 +589,7 @@ function joinChat() {
 
 function initApp() {
     firebase.auth().onAuthStateChanged(function (user) {
-
+        //figure out multiple instances of login issue 
         if (user && user.emailVerified) {
             document.getElementById("loginOpen").style.display = "none";
             document.getElementById("signupOpen").style.display = "none";
@@ -585,10 +599,8 @@ function initApp() {
             email = user.email;
             db.collection("users").doc(email).update({
                 loggedIn: true
-            }).then(function () {
-                loadChatsColumn();
-
-            }).then(function () {
+            }).then(async function () {
+                await loadChatsColumn(); // this makes the program wait for the chat column to load before everything else loads b/c join chat is dependent on it --> so then I had to return the loadchatscolumn .then promise
                 joinChat();
 
             })
