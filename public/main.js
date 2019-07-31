@@ -71,6 +71,8 @@ document.getElementById("newChatCancel").onclick = function () {
 }
 
 
+
+
 // Email checker for signups
 function validateEmail(email) {
     var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; // check this
@@ -585,7 +587,41 @@ function joinChat() {
         })
     }
 }
+// used to add attributes/classes related to chats column collapsing when the window gets really small
+var triggerChatsColumn = window.matchMedia("(max-width:992px)");
 
+function collapseChatsColumn(triggerChatsColumn) {
+    var chatsTrigger = document.getElementById("chatsTrigger");
+    if (triggerChatsColumn.matches) {
+        //Making chats collapse if screensize < 993px
+        console.log('here');
+        chatsTrigger.setAttribute("data-toggle", "collapse");
+        chatsTrigger.setAttribute("href", "#chats");
+        chatsTrigger.setAttribute("aria-expanded", "false");
+        chatsTrigger.setAttribute("aria-controls", "chats");
+
+        document.getElementById("chats").className += " collapse show-collapsed-chats";
+
+        document.getElementById("active-chat").className += " relative";
+        document.getElementById("active-chat-members").className += " relative";
+
+    } else {
+        console.log('here1');
+        chatsTrigger.removeAttribute("data-toggle");
+        chatsTrigger.removeAttribute("href");
+        chatsTrigger.removeAttribute("aria-expanded");
+        chatsTrigger.removeAttribute("aria-controls");
+
+        document.getElementById("chats").classList.remove("collapse", "show-collapsed-chats");
+        document.getElementById("chats").removeAttribute("aria-expanded");
+        document.getElementById("chats").removeAttribute("style");
+
+
+        document.getElementById("active-chat").classList.remove("relative");
+        document.getElementById("active-chat-members").classList.remove("relative");
+
+    }
+}
 
 function initApp() {
     firebase.auth().onAuthStateChanged(function (user) {
@@ -601,7 +637,9 @@ function initApp() {
                 loggedIn: true
             }).then(async function () {
                 await loadChatsColumn(); // this makes the program wait for the chat column to load before everything else loads b/c join chat is dependent on it --> so then I had to return the loadchatscolumn .then promise
-                joinChat();
+                await joinChat();
+                collapseChatsColumn(triggerChatsColumn);
+                triggerChatsColumn.addListener(collapseChatsColumn);
 
             })
         } else if (user && !(user.emailVerified)) {
@@ -620,6 +658,9 @@ function initApp() {
         }
     })
 }
+
+
 window.onload = function () {
     initApp();
+
 }
