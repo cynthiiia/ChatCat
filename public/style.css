@@ -26,23 +26,37 @@ body {
 
 /* Font Sizes - MAYBE SIZE BASED ON THE MEDIA QUERIES THING */
 
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width: 450px) {
     h5 {
-        font-size: 1.9vw;
+        font-size: 2.4vw;
     }
 }
+
+@media only screen and (min-width: 450px) {
+    h5 {
+        font-size: 2.1vw;
+    }
+}
+
 @media only screen and (min-width: 600px) {
     h5 {
-        font-size: 1.6vw;
+        font-size: 1.8vw;
     }
 }
+
 @media only screen and (min-width: 768px) {
     h5 {
-        font-size: 1.3vw;
+        font-size: 1.5vw;
     }
 }
 
 @media only screen and (min-width: 992px) {
+    h5 {
+        font-size: 1.15vw;
+    }
+}
+
+@media only screen and (min-width: 1200px) {
     h5 {
         font-size: 1vw;
     }
@@ -412,9 +426,17 @@ input+p {
     position: relative;
 }
 
-.show-collapsed-chats {
+
+.chat-container .row #chats.show-collapsed-chats {
     position: absolute;
+    top: 52px;
+    left: 0px;
     z-index: 1;
     box-shadow: 0 0 10px black;
     background-color: white;
+    height: calc(100% - 52px);
+    -webkit-transition: width 0.35s ease;
+    -moz-transition: width 0.35s ease;
+    -o-transition: width 0.35s ease;
+    transition: width 0.35s ease;
 }

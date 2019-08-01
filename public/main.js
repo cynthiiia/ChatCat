@@ -588,11 +588,11 @@ function joinChat() {
     }
 }
 // used to add attributes/classes related to chats column collapsing when the window gets really small
-var triggerChatsColumn = window.matchMedia("(max-width:992px)");
+var triggerChatsColumn = window.matchMedia("(min-width:1200px)");
 
 function collapseChatsColumn(triggerChatsColumn) {
     var chatsTrigger = document.getElementById("chatsTrigger");
-    if (triggerChatsColumn.matches) {
+    if (!triggerChatsColumn.matches) {
         //Making chats collapse if screensize < 993px
         console.log('here');
         chatsTrigger.setAttribute("data-toggle", "collapse");
@@ -600,7 +600,7 @@ function collapseChatsColumn(triggerChatsColumn) {
         chatsTrigger.setAttribute("aria-expanded", "false");
         chatsTrigger.setAttribute("aria-controls", "chats");
 
-        document.getElementById("chats").className += " collapse show-collapsed-chats";
+        document.getElementById("chats").className += " collapse in width show-collapsed-chats";
 
         document.getElementById("active-chat").className += " relative";
         document.getElementById("active-chat-members").className += " relative";
@@ -612,7 +612,7 @@ function collapseChatsColumn(triggerChatsColumn) {
         chatsTrigger.removeAttribute("aria-expanded");
         chatsTrigger.removeAttribute("aria-controls");
 
-        document.getElementById("chats").classList.remove("collapse", "show-collapsed-chats");
+        document.getElementById("chats").classList.remove("collapse", "in", "width", "show-collapsed-chats");
         document.getElementById("chats").removeAttribute("aria-expanded");
         document.getElementById("chats").removeAttribute("style");
 
