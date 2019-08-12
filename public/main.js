@@ -71,8 +71,6 @@ document.getElementById("newChatCancel").onclick = function () {
 }
 
 
-
-
 // Email checker for signups
 function validateEmail(email) {
     var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; // check this
@@ -111,12 +109,11 @@ document.getElementById("signupSubmit").onclick = function () {
 
     if (validateEmail(email) & valiatePassword(password)) {
 
-        auth.createUserWithEmailAndPassword(email, password).then(async function () { //check if this async/await is ok 
+        auth.createUserWithEmailAndPassword(email, password).then(function () {
             document.getElementById("signupForm").style.display = "none";
-            var user = await firebase.auth().currentUser;
-            user.sendEmailVerification();
-            return user;
+            return firebase.auth().currentUser;
         }).then(function (user) {
+            user.sendEmailVerification();
 
             db.collection("users").doc(email).set({
                     firstName: firstName,
@@ -126,10 +123,10 @@ document.getElementById("signupSubmit").onclick = function () {
                     userChatsOrder: []
                 })
                 .then(function () {
-                    console.log("Document written sucessfully for this user!");
+                    console.log("User added to database successfully");
                 })
                 .catch(function (error) {
-                    console.error("Error adding document: ", error);
+                    console.error("Error adding user to database: ", error);
                 });
 
             user.updateProfile({
@@ -141,10 +138,14 @@ document.getElementById("signupSubmit").onclick = function () {
         }).catch(function (error) { // Handle Errors here. --> figure out proper errors to catch here
             var errorCode = error.code;
             var errorMessage = error.message;
-            if (errorCode == 'auth/weak-password') {
-                alert('The password is too weak.');
-            } else {
-                alert(errorMessage);
+            if (errorCode == 'auth/email-already-in-use') {
+                alert('The email address is already in use by another account.');
+            } else if (errorCode == 'auth/invalid-email') {
+                alert('Please enter a valid email. ');
+            } else if (errorCode == 'auth/operation-not-allowed') {
+                alert('This account is no enabled. Please contact support.')
+            } else if (errorCode == 'auth/weak-password') {
+                alert('Password is too weak.')
             }
             console.log(error);
         });
@@ -173,8 +174,10 @@ document.getElementById("loginSubmit").onclick = function () {
         } else if (errorCode === 'user-not-found') {
             loginFormWarning.textContent = "Username and/or password invalid.";
 
-        } else {
-            loginFormWarning.textContent = errorMessage;
+        } else if (errorCode == 'auth/user-disabled') {
+            loginFormWarning.textContent = 'User is disabled. Please contact support';
+        } else if (errorCode == 'auth/invalid-email') {
+            loginFormBody.textContent = "Invalid email entered."
         }
     });
 };
@@ -201,7 +204,7 @@ function drop(ev) {
     // reprint the chat button
     printChatButton(chatName, chatID, targetID);
 
-    // neeed to still update the database so that it pulls properly
+    // the database based on the new order so that it pulls properly on load
     db.collection("users").doc(email).get().then(function (user) {
         var updatedUserChatsOrder = [];
         Object.values(user.data().userChatsOrder).map((item) => {
@@ -300,19 +303,14 @@ function printMember(loggedIn, memberEmail, firstName, lastName) {
     }
 }
 
-function loadMembers(chatID) {
-    db.collection("chatMembers").doc(chatID).get().then(function (chatMembers) {
-        for (member in chatMembers.data()) {
-            if (chatMembers.data()[member]) {
-                db.collection("users").doc(member).get().then(function (memberData) {
-                    console.log(member + " " + memberData.data());
-                    printMember(memberData.data().loggedIn, memberData.data().email, memberData.data().firstName, memberData.data().lastName);
-                })
+async function loadMembers(chatID) {
+    var chatMembers = await db.collection("chatMembers").doc(chatID).get()
+    for (member in chatMembers.data()) {
+        var memberData = await db.collection("users").doc(member).get();
 
-            }
-
-        }
-    })
+        printMember(memberData.data().loggedIn, memberData.data().email, memberData.data().firstName, memberData.data().lastName);
+    }
+    return;
 }
 
 var unsubscribeNewMembers;
@@ -344,12 +342,9 @@ function listenNewMembers(chatID) {
 var unsubscribeMembersStatus;
 // issue with this is you will end up with a lot of reads because it looks at evrey single user change --> make more efficient!!!!!!!!!!!!!
 function listenMembersStatus(chatID) {
-    console.log("member status");
     unsubscribeMembersStatus = db.collection("users").onSnapshot(function (snapshot) {
         snapshot.docChanges().forEach(function (change) {
-            console.log("each change");
             if (change.type == "modified") {
-                console.log("modified");
                 var changedUserData = change.doc.data();
                 db.collection("chatMembers").doc(chatID).get().then(function (chatMembers) {
                     if (document.getElementById(changedUserData.email)) {
@@ -370,6 +365,16 @@ function listenMembersStatus(chatID) {
     })
 }
 
+function printDeleteChat(chatID) {
+    document.querySelector("#header-area .col-lg-12").insertAdjacentHTML("beforeend", "<button class='btn' id='delete-chat' onclick='deleteChat(" + chatID + ")'><span class='glyphicon glyphicon-remove'></span></button>")
+
+}
+
+function deleteChat(chatID) {
+    
+}
+
+
 // Load the all information pertaining to the selected chat
 function loadChat(chatID) {
     if (snapshotCounter != 0) {
@@ -389,10 +394,11 @@ function loadChat(chatID) {
     loadOldMessages(activeChatID);
     listenNewMessages(activeChatID);
     clearMembers();
-    loadMembers(activeChatID);
-    listenNewMembers(activeChatID);
-    listenMembersStatus(activeChatID);
-
+    loadMembers(activeChatID).then(function () {
+        listenNewMembers(activeChatID);
+        listenMembersStatus(activeChatID);
+    });
+    printDeleteChat(activeChatID);
 }
 
 document.getElementById("newChatSubmit").onclick = function () {
@@ -624,6 +630,10 @@ function collapseChatsColumn(triggerChatsColumn) {
 }
 
 function initApp() {
+
+    collapseChatsColumn(triggerChatsColumn);
+    triggerChatsColumn.addListener(collapseChatsColumn);
+
     firebase.auth().onAuthStateChanged(function (user) {
         //figure out multiple instances of login issue 
         if (user && user.emailVerified) {
@@ -637,9 +647,7 @@ function initApp() {
                 loggedIn: true
             }).then(async function () {
                 await loadChatsColumn(); // this makes the program wait for the chat column to load before everything else loads b/c join chat is dependent on it --> so then I had to return the loadchatscolumn .then promise
-                await joinChat();
-                collapseChatsColumn(triggerChatsColumn);
-                triggerChatsColumn.addListener(collapseChatsColumn);
+                joinChat();
 
             })
         } else if (user && !(user.emailVerified)) {

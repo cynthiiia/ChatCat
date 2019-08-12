@@ -294,6 +294,13 @@ input+p {
 #header-area img {
     height: 35px;
 }
+#delete-chat {
+    position: absolute;
+    top: 14px;
+    right: 25px;
+    padding: 6px 8px 5px 8px;
+}
+
 
 /* Messages section */
 #message-area {
