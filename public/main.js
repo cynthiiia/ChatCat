@@ -14,6 +14,14 @@ var db = firebase.firestore();
 //Firebase Authenticator
 var auth = firebase.auth();
 
+
+// The Cloud Functions for Firebase SDK to create Cloud Functions and setup triggers.
+const functions = require('firebase-functions');
+
+// The Firebase Admin SDK to access the Firebase Realtime Database.
+const admin = require('firebase-admin');
+admin.initializeApp();
+
 //Users data
 //var user; // To save the user that opened the site
 var name, email;
@@ -365,14 +373,71 @@ function listenMembersStatus(chatID) {
     })
 }
 
-function printDeleteChat(chatID) {
-    document.querySelector("#header-area .col-lg-12").insertAdjacentHTML("beforeend", "<button class='btn' id='delete-chat' onclick='deleteChat(" + chatID + ")'><span class='glyphicon glyphicon-remove'></span></button>")
+async function leaveChat(chatID) {
+    console.log("hi1 " + chatID);
+    var chatMembers = await db.collection("chatMembers").doc(chatID).get(); // check how to do these in parallel
+
+    var user = await db.collection("users").doc(email).get();
+    console.log(chatMembers.exists);
+    if (chatMembers.exists) { 
+        console.log('does it work');
+        var arrayChatMembers = Object.values(chatMembers.data());
+
+        var batch = db.batch();
+
+        var updatedUserChatsOrder = [];
+        Object.values(user.data().userChatsOrder).filter(function (userChat) {
+            console.log("leave chat" + userChat);
+            userChat !== chatID;
+        })
+        console.log("yo" + updatedUserChatsOrder);
+
+        batch.update(db.collection("users").doc(email), {
+            userChatsOrder: updatedUserChatsOrder
+        })
+
+        batch.update(db.collection("users").doc(email).collection("userChats").doc(chatID), {
+            chatID: firebase.firestore.FieldValue.delete()
+        })
+
+        if (arrayChatMembers.length == 1) {
+            // if theres only tihs user left, delete the whole chat off the database
+            batch.delete(db.collection("chatMembers").doc(chatID));
+            batch.delete(db.collection("chats").doc(chatID));
+
+            var deleteFn = firebase.functions().httpsCallable('recursiveDelete');
+            deleteFn({
+                    path: db.collection("chatMessages").doc(chatID)
+                })
+                .then(function (result) {
+                    logMessage('Delete success: ' + JSON.stringify(result));
+                })
+                .catch(function (err) {
+                    logMessage('Delete failed, see console,');
+                    console.warn(err);
+                });
+
+
+        } else if (arrayChatMembers > 1) {
+
+            // if there more than one chat member then just delete the current user off the doc
+            batch.update(db.collection("chatMembers").doc(chatID), {
+                email: firebase.firestore.FieldValue.delete()
+            });
+        }
+
+        batch.commit();
+
+    }
 
 }
 
-function deleteChat(chatID) {
-    
+function printLeaveChatButton(chatID) {
+    console.log("here" + chatID);
+    document.querySelector("#header-area .col-lg-12").insertAdjacentHTML("beforeend", "<button class='btn' id='delete-chat' onclick='leaveChat(\"" + chatID + "\")'><span class='glyphicon glyphicon-remove'></span></button>")
+
 }
+
 
 
 // Load the all information pertaining to the selected chat
@@ -398,7 +463,8 @@ function loadChat(chatID) {
         listenNewMembers(activeChatID);
         listenMembersStatus(activeChatID);
     });
-    printDeleteChat(activeChatID);
+    console.log(activeChatID);
+    printLeaveChatButton(activeChatID);
 }
 
 document.getElementById("newChatSubmit").onclick = function () {
