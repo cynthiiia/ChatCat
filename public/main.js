@@ -445,9 +445,6 @@ async function leaveChat(chatID) {
 
 }
 
-
-
-
 // Load the all information pertaining to the selected chat
 function loadChat(chatID) {
     if (snapshotCounter != 0) {
@@ -460,7 +457,6 @@ function loadChat(chatID) {
     }
     activeChatID = chatID; // see if this is appropriate?
     window.location.hash = activeChatID; //fix this
-    console.log("printing the title");
     document.querySelector("#header-area").children[0].children[1].textContent = document.getElementById(activeChatID).children[0].innerHTML;
     document.querySelector("#input").disabled = false;
     clearChatMessages();
@@ -471,7 +467,7 @@ function loadChat(chatID) {
         listenNewMembers(activeChatID);
         listenMembersStatus(activeChatID);
     });
-    console.log(activeChatID);
+    clearLeaveChatButton();
     printLeaveChatButton(activeChatID);
 }
 
