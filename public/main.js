@@ -371,7 +371,9 @@ function printLeaveChatButton(chatID) {
 }
 
 function clearLeaveChatButton() {
-    document.getElementById("header-area").children[0].removeChild(document.getElementById("delete-chat"));
+    if (document.getElementById("delete-chat")) {
+        document.getElementById("header-area").children[0].removeChild(document.getElementById("delete-chat"));
+    }
 
 }
 
