@@ -1,3 +1,5 @@
+// To fix: the database structure for checking if users are logged in, and checking to see if chats have new members (needs to listen to all chats) and then secuirty can be improved
+
 var firebaseConfig = {
     apiKey: "AIzaSyBhe-8l45IwfWCDDPBjABMim1JFmIRPZ0U",
     authDomain: "chatcat-owo.firebaseapp.com",
