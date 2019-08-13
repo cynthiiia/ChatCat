@@ -14,14 +14,6 @@ var db = firebase.firestore();
 //Firebase Authenticator
 var auth = firebase.auth();
 
-
-// The Cloud Functions for Firebase SDK to create Cloud Functions and setup triggers.
-const functions = require('firebase-functions');
-
-// The Firebase Admin SDK to access the Firebase Realtime Database.
-const admin = require('firebase-admin');
-admin.initializeApp();
-
 //Users data
 //var user; // To save the user that opened the site
 var name, email;
@@ -373,49 +365,70 @@ function listenMembersStatus(chatID) {
     })
 }
 
+function printLeaveChatButton(chatID) {
+    document.querySelector("#header-area .col-lg-12").insertAdjacentHTML("beforeend", "<button class='btn' id='delete-chat' onclick='leaveChat(\"" + chatID + "\")'><span class='glyphicon glyphicon-remove'></span></button>")
+
+}
+
+function clearLeaveChatButton() {
+    document.getElementById("header-area").children[0].removeChild(document.getElementById("delete-chat"));
+
+}
+
 async function leaveChat(chatID) {
-    console.log("hi1 " + chatID);
     var chatMembers = await db.collection("chatMembers").doc(chatID).get(); // check how to do these in parallel
 
     var user = await db.collection("users").doc(email).get();
-    console.log(chatMembers.exists);
-    if (chatMembers.exists) { 
-        console.log('does it work');
+
+    if (chatMembers.exists) {
+        // Clear the UI first and remove the listeners 
+        if (snapshotCounter != 0) {
+            unsubscribeNewMessages(); //Unsub to previous chat first
+            unsubscribeNewMembers();
+            unsubscribeMembersStatus();
+            snapshotCounter = 0;
+
+        }
+        window.location.hash = "";
+        document.querySelector("#header-area").children[0].children[1].textContent = "Welcome to ChatCat!";
+        document.querySelector("#input").disabled = true;
+        clearChatMessages();
+        clearMembers();
+        clearLeaveChatButton();
+        // Remove the button from the chats column
+        var chatButton = document.getElementById(chatID);
+        chatButton.parentElement.parentElement.parentElement.removeChild(chatButton.parentElement.parentElement.nextElementSibling);
+        chatButton.parentElement.parentElement.parentElement.removeChild(chatButton.parentElement.parentElement);
+
+
+        // Now remove everything from database
         var arrayChatMembers = Object.values(chatMembers.data());
 
         var batch = db.batch();
 
         var updatedUserChatsOrder = [];
-        Object.values(user.data().userChatsOrder).filter(function (userChat) {
-            console.log("leave chat" + userChat);
-            userChat !== chatID;
+        await Object.values(user.data().userChatsOrder).map(userChat => {
+            if (userChat != chatID) {
+                updatedUserChatsOrder.push(userChat);
+
+            }
         })
-        console.log("yo" + updatedUserChatsOrder);
 
         batch.update(db.collection("users").doc(email), {
             userChatsOrder: updatedUserChatsOrder
         })
 
-        batch.update(db.collection("users").doc(email).collection("userChats").doc(chatID), {
-            chatID: firebase.firestore.FieldValue.delete()
-        })
+        batch.delete(db.collection("users").doc(email).collection("userChats").doc(chatID));
 
         if (arrayChatMembers.length == 1) {
             // if theres only tihs user left, delete the whole chat off the database
             batch.delete(db.collection("chatMembers").doc(chatID));
             batch.delete(db.collection("chats").doc(chatID));
 
-            var deleteFn = firebase.functions().httpsCallable('recursiveDelete');
-            deleteFn({
-                    path: db.collection("chatMessages").doc(chatID)
-                })
-                .then(function (result) {
-                    logMessage('Delete success: ' + JSON.stringify(result));
-                })
-                .catch(function (err) {
-                    logMessage('Delete failed, see console,');
-                    console.warn(err);
-                });
+            var messages = await db.collection("chatMessages").doc(chatID).collection("messages").get();
+            messages.forEach(function (message) {
+                batch.delete(db.collection("chatMessages").doc(chatID).collection("messages").doc(message.id));
+            })
 
 
         } else if (arrayChatMembers > 1) {
@@ -432,11 +445,6 @@ async function leaveChat(chatID) {
 
 }
 
-function printLeaveChatButton(chatID) {
-    console.log("here" + chatID);
-    document.querySelector("#header-area .col-lg-12").insertAdjacentHTML("beforeend", "<button class='btn' id='delete-chat' onclick='leaveChat(\"" + chatID + "\")'><span class='glyphicon glyphicon-remove'></span></button>")
-
-}
 
 
 
@@ -514,8 +522,6 @@ function clearChatsColumn() {
         chatsColumn.removeChild(chatsColumn.children[i]);
     }
 }
-
-
 
 function loadChatsColumn() {
     return db.collection("users").doc(email).get().then(function (user) {
@@ -612,6 +618,7 @@ document.getElementById("logout").onclick = function () {
         clearChatsColumn();
         clearChatMessages();
         clearMembers();
+        clearLeaveChatButton();
         document.querySelector("#header-area").children[0].children[1].textContent = "Welcome to ChatCat!";
 
     });
